@@ -233,7 +233,7 @@ def select_chanel(call):
             markup.add(*markup_button)
             markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
             markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]['gruop_id']}"))
-            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]["gruop_id"]}"))
+            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
             bot.edit_message_caption(
 f"""
 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
