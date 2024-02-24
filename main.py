@@ -231,9 +231,9 @@ def select_chanel(call):
                 else:
                     markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
             markup.add(*markup_button)
-            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]["gruop_id"]}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]["gruop_id"]}"))
-            markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]["gruop_id"]}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]["gruop_id"]}"))
-            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]["gruop_id"]}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]["gruop_id"]}"))
+            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+            markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]['gruop_id']}"))
+            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]["gruop_id"]}"))
             bot.edit_message_caption(
 f"""
 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
@@ -374,9 +374,9 @@ def select_chanel(call):
                     markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
             markup.add(*markup_button)
 
-            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]["gruop_id"]}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]["gruop_id"]}"))
-            markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]["gruop_id"]}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]["gruop_id"]}"))
-            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]["gruop_id"]}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]["gruop_id"]}"))
+            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+            markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]['gruop_id']}"))
+            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
             bot.edit_message_caption(
     f"""
 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
@@ -429,9 +429,9 @@ def select_chanel(call):
     for i in range(1,int(geam_info[cid]["number"])+1):
         markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
     markup.add(*markup_button)
-    markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{geam_info[cid]["gruop_id"]}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{geam_info[cid]["gruop_id"]}"))
-    markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{geam_info[cid]["gruop_id"]}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{geam_info[cid]["gruop_id"]}"))
-    markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{geam_info[cid]["gruop_id"]}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{geam_info[cid]["gruop_id"]}"))
+    markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{geam_info[cid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{geam_info[cid]['gruop_id']}"))
+    markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{geam_info[cid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{geam_info[cid]['gruop_id']}"))
+    markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{geam_info[cid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{geam_info[cid]['gruop_id']}"))
     bot.send_photo(geam_info[cid]["gruop_id"],geam_info[cid]["photo"],f"""
 📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
 🕰ساعت شروع:{geam_info[cid]["time"]}
