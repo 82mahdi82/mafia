@@ -48,6 +48,7 @@ def is_bot_admin(chat_id):
     # print("iiiiiiiiiiiidddddddddd",bot.get_me().id)
     # دریافت اطلاعات عضویت ربات در گروه
     bot_member = bot.get_chat_member(int(chat_id), bot.get_me().id)
+    print(bot_member)
     # بررسی اینکه آیا ربات به عنوان ادمین در گروه است یا خیر
     if bot_member.status == 'administrator':
         return True
@@ -59,6 +60,7 @@ def listener(messages):
     When new messages arrive TeleBot will call this function.
     """
     for m in messages:
+        # print(m)
         cid = m.chat.id
         if m.content_type == 'text':
             print(str(m.chat.first_name) +
@@ -110,9 +112,22 @@ def present_def(call):
                         present_dict[gid].append(cid)
                         bot.answer_callback_query(call.id,"حضور شما ثبت شد")
                         text=""
+                        total_number_reserv=[]
                         for i in mid_game_in_group[gid]:
+                            total_number_reserv.append(i)
                             name=mid_game_in_group[gid][i][1]
                             text+=str(i)+"."+str(name)+"(حاضر)"+"\n"
+                        markup=InlineKeyboardMarkup()
+                        markup_button=[]
+                        for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                            if i in total_number_reserv:
+                                markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+                            else:
+                                markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+                        markup.add(*markup_button)
+                        markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+                        markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]['gruop_id']}"))
+                        markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
                         bot.edit_message_caption(
 f"""
 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
@@ -123,7 +138,7 @@ f"""
 ~~~~~~~~~~~~~~~~~~
 {text}
 ~~~~~~~~~~~~~~~~~~
-""",gid,mid,parse_mode="HTML"
+""",gid,mid,parse_mode="HTML",reply_markup=markup
             )
                     else:
                         bot.answer_callback_query(call.id,"شما حضور خود را ثبت کرده اید")
@@ -138,6 +153,15 @@ f"""
         bot.answer_callback_query(call.id,"شما در بازی نیستید")
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("chanel"))
+def select_chanel_new(call):
+    cid= call.message.chat.id
+    data=call.data.split("_")
+    mid=call.message.message_id
+    markup=ReplyKeyboardMarkup()
+    markup.add("کنسل")
+    bot.send_message(cid,"برای اضافه کردن یک کانال لطفا ابتدا ربات را در آن کانال اد و ادمین کنید سپس یک پیام از همان کانال را در اینجا فوروارد کنید\nدر صورت لغو عملیات از دکمه کنسل استفاده کنید.",reply_markup=markup)
+    userStep[cid]=200
 @bot.callback_query_handler(func=lambda call: call.data.startswith("seting"))
 def select_chanel(call):
     cid= call.message.chat.id
@@ -656,12 +680,17 @@ def command_start(m):
     if len(admin)==0:
         admin.append(cid)
     if cid in admin:
+        try:
+            database.insert_users(int(cid),"ادمین")
+        except:
+            pass
         if cid in geam_info:
             geam_info.pop(cid)
         userStep[cid]=0
         markup=InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("ساخت بازی جدید",callback_data="creat_geam"))
         markup.add(InlineKeyboardButton("لیست بازی های ذخیره شده",callback_data="list"))
+
         bot.send_message(cid,"""
 سلام ادمین گرامی به ربات خوش آمدید 
 لطفا برای استفاده از ربات از دکمه های زیر استفاده کنید
@@ -748,15 +777,19 @@ def creat_geam_3(m):
                 markup.add(InlineKeyboardButton(i[1],callback_data=f"select_{i[0]}_{i[1]}"))
                 grup_ok=True
     else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
         markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
-        bot.send_message(cid,"ربات شما در گروهی عضو نیست لطفا برای ارسال بازی در گروه ربات را در آن گروه اد کنید و ادمین کنید.\nسپس دکمه سرچ را بزنید",reply_markup=markup)
+        bot.send_message(cid,"ربات شما در گروهی عضو نیست لطفا برای ارسال بازی در گروه ربات را در آن گروه اد کنید و ادمین کنید.\nسپس دکمه سرچ را بزنید.\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
         userStep[cid]=0
         return
     if grup_ok:
-        bot.send_message(cid,"لطفا گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید:",reply_markup=markup)
-    else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
         markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
-        bot.send_message(cid,"لطفا ربات را در گروه هایی که میخواهید بازی را ارسال کنید ادمین کنید.\nسپس دکمه سرچ را بزنید",reply_markup=markup)
+        bot.send_message(cid,"لطفا گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید:\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+    else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"لطفا ربات را در گروه هایی که میخواهید بازی را ارسال کنید ادمین کنید.\nسپس دکمه سرچ را بزنید\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
     userStep[cid]=0
 
 @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==11)
@@ -858,6 +891,35 @@ def loging_cid(m):
     except:
         bot.send_message(cid,"شما قبلا ثبت نام کرده اید")
 
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==200)
+def creat_geam_1(m):
+    cid = m.chat.id
+    text=m.text
+    if m.forward_origin != None:
+        if m.forward_origin.type=="channel":
+            database.insert_group(m.forward_origin.chat.id,m.forward_origin.chat.title)
+            markup=InlineKeyboardMarkup()
+            list_dict_grups=database.use_table_admin_group()
+            
+            if len(list_dict_grups)>0:
+                grup_ok=False
+                for i in list_dict_grups:
+                    if is_bot_admin(i[0]):
+                        markup.add(InlineKeyboardButton(i[1],callback_data=f"select_{i[0]}_{i[1]}"))
+                        grup_ok=True
+                if grup_ok:
+                    markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+                    markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+                    bot.send_message(cid,"لطفا گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید:\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+                else:
+                    markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+                    markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+                    bot.send_message(cid,"لطفا ربات را در کانال ها و گروه هایی که میخواید بازی را ارسال کنید ادمین کنید",reply_markup=markup)
+        else:
+            bot.send_message(cid,"لطفا پیامی را که فوروارد میکنید فقط از یک کانال باشد")
+    else:
+        bot.send_message(cid,"لطفا پیام را از کانالی فوروارد کنید")
+
 def check_and_notify_thread():
     while True:
         if len(game_info_in_group)>0:
@@ -898,9 +960,22 @@ def check_and_notify_thread():
                                     print("nashod",mid_game_in_group[gid][number][0])
                             if update:
                                 text=""
+                                total_number_reserv=[]
                                 for i in mid_game_in_group[gid]:
+                                    total_number_reserv.append(i)
                                     name=mid_game_in_group[gid][i][1]
                                     text+=str(i)+"."+str(name)+"\n"
+                                markup=InlineKeyboardMarkup()
+                                markup_button=[]
+                                for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                                    if i in total_number_reserv:
+                                        markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+                                    else:
+                                        markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+                                markup.add(*markup_button)
+                                markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+                                markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]['gruop_id']}"))
+                                markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
                                 bot.edit_message_caption(
 f"""
 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
@@ -911,7 +986,7 @@ f"""
 ~~~~~~~~~~~~~~~~~~
 {text}
 ~~~~~~~~~~~~~~~~~~
-""",gid,mid,parse_mode="HTML"
+""",gid,mid,parse_mode="HTML",reply_markup=markup
             )
 
                         else:
