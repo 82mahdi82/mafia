@@ -1,28 +1,26 @@
-import time
-import database
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
-import random
-import logging
+import database
+import time
+import datetime
+import threading
+import pytz
+import terikh
+import jdatetime
 
-logging.basicConfig(filename='example.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s')
-database.start_creat()
 
-TOKEN ='6317356905:AAGQ2p8Lo0Kc4mkChTmE7ZbI2p1bzw9cIO8'
+database.creat_database_tables()
 
-new_size_product={"name":"","brand":"","code":0}   
-mid_new_product=0
-shopping_cart_stop={} #{cid:{tracking_code:[{},{}]}}
-userStep = {}   # {cid:step}
-ch_id = -1002046803532
-admin = 748626808
-products = {}   #{cid:{code:{"name":"","brand":"","code":0,"mid":0}}}
-edit_deerails_admin={}  # {cid:{product_id:{"name":"","brand":"","code":0}}}
-sssss = 0
-check = {}  # {cid:{"time1":0,"time2":0,"score":0}}
-block = {}  # {cid:time}
+TOKEN ='6317356905:AAGQ2p8Lo0Kc4mkChTmE7ZbI2p1bzw9cIO8'#'6903346134:AAFVD5vdQDRZ5hZ6m1LlBj2C14Y5PeS6HsQ'#'6317356905:AAGQ2p8Lo0Kc4mkChTmE7ZbI2p1bzw9cIO8'
 
+userStep = {} 
+owner=[]
+admin=[]#[6926746273]
+geam_info={} #cid:{name:...,}
+game_info_in_group={}
+mid_game_in_group={}#gid:{number:[cid,name,mid]}
+present_dict={}
+temporary_time={}
 
 def get_user_step(uid):
     if uid in userStep:
@@ -31,1240 +29,1095 @@ def get_user_step(uid):
         userStep[uid] = 0
         return 0
 
+# def gen_time_markup():
+#     time_now=datetime.datetime.now()
+#     markup = InlineKeyboardMarkup()
+#     markup.add(InlineKeyboardButton(f"ساعت {time_now.hour}", callback_data=f'time_hour_{time_now.hour}'),InlineKeyboardButton(f"دقیقه {time_now.minute}", callback_data='time_minute_{time_now.minute}'))
+#     return markup
+def gen_number_markup(qty):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton('➖', callback_data=f'number_{max(qty-1, 1)}'),
+               InlineKeyboardButton(f'{qty}', callback_data='number'),
+               InlineKeyboardButton('➕', callback_data=f'number_{qty+1}'))
+    markup.add(InlineKeyboardButton('تایید ✅', callback_data=f'number_add_{qty}'))
+    return markup
+def gen_number_markup_change(qty):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton('➖', callback_data=f'number_change_{max(qty-1, 1)}'),
+               InlineKeyboardButton(f'{qty}', callback_data='number'),
+               InlineKeyboardButton('➕', callback_data=f'number_change_{qty+1}'))
+    markup.add(InlineKeyboardButton('تایید ✅', callback_data=f'number_change_add_{qty}'))
+    return markup
 
-
-def unblock(cid):
-    if cid in block:
-        if block[cid] < time.time():
-            block.pop(cid)
-
-
-def checking(cid):
-    if cid in block:
-        return
-    check.setdefault(cid, {})
-    check[cid].setdefault("time1", 0)
-    check[cid].setdefault("time2", 0)
-    check[cid].setdefault("score", 0)
-    if check[cid]["time1"] == 0:
-        check[cid]["time1"] = time.time()
-    elif check[cid]["time2"] == 0:
-        check[cid]["time2"] = time.time()
-        timespam = check[cid]["time2"]-check[cid]["time1"]
-        if int(timespam) < 3:
-            check[cid]["score"] += 1
+def is_bot_admin(chat_id):
+    # print("iiiiiiiiiiiidddddddddd",bot.get_me().id)
+    # دریافت اطلاعات عضویت ربات در گروه
+    bot_member = bot.get_chat_member(int(chat_id), bot.get_me().id)
+    print(bot_member)
+    # بررسی اینکه آیا ربات به عنوان ادمین در گروه است یا خیر
+    if bot_member.status == 'administrator':
+        return True
     else:
-        check[cid]["time1"] = check[cid]["time2"]
-        check[cid]["time2"] = time.time()
-        timespam = check[cid]["time2"]-check[cid]["time1"]
-        if int(timespam) < 3:
-            check[cid]["score"] += 1
-            if check[cid]["score"] == 20:
-                bot.send_message(cid,"شما به دلیل اسپم زیاد به مدت 1 ساعت بن شدید")
-                check[cid]["score"] = 0
-                block[cid] = time.time()+10
-        elif int(timespam) > 3:
-            if check[cid]["score"] == 0:
-                pass
-            else:
-                check[cid]["score"] -= 1
-
-# def listener(messages):
-#     """
-#     When new messages arrive TeleBot will call this function.
-#     """
-#     for m in messages:
-#         cid = m.chat.id
-#         if m.content_type == 'text':
-#             print(str(m.chat.first_name) +
-#                   " [" + str(m.chat.id) + "]: " + m.text)
-#         elif m.content_type == 'photo':
-#             print(str(m.chat.first_name) +
-#                   " [" + str(m.chat.id) + "]: " + "New photo recieved")
-#         elif m.content_type == 'document':
-#             print(str(m.chat.first_name) +
-#                   " [" + str(m.chat.id) + "]: " + 'New Document recieved')
+        return False
+    
+def listener(messages):
+    """
+    When new messages arrive TeleBot will call this function.
+    """
+    for m in messages:
+        # print(m)
+        cid = m.chat.id
+        if m.content_type == 'text':
+            print(str(m.chat.first_name) +
+                  " [" + str(m.chat.id) + "]: " + m.text)
+        elif m.content_type == 'photo':
+            print(str(m.chat.first_name) +
+                  " [" + str(m.chat.id) + "]: " + "New photo recieved")
+        elif m.content_type == 'document':
+            print(str(m.chat.first_name) +
+                  " [" + str(m.chat.id) + "]: " + 'New Document recieved')
 
 
 bot = telebot.TeleBot(TOKEN)
-# bot.set_update_listener(listener)
+bot.set_update_listener(listener)
 
-def gen_product_markup_admin(code, size, qty):
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton('➖', callback_data=f'updqtystock_edit_{code}_{size}_{max(qty-1, 0)}'),
-               InlineKeyboardButton(f'{qty}', callback_data='updqtystock_nothing'),
-               InlineKeyboardButton('➕', callback_data=f'updqtystock_edit_{code}_{size}_{qty+1}'))
-    markup.add(InlineKeyboardButton('✅ ذخیره کردن تغییرات',
-               callback_data=f'updqtystock_add_{code}_{size}_{qty}'))
-    markup.add(InlineKeyboardButton(
-        "برگشت", callback_data=f"sshow_the_deetails_{code}"))
-    return markup
+@bot.message_handler(func=lambda m: m.text=="کنسل")
+def cancel_admin(m):
+    bot.send_message(m.chat.id,"روند ساخت بازی کنسل شد")
+    command_start(m)
 
-def gen_product_markup(code, size, qty):
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton('➖', callback_data=f'product_edit_{code}_{size}_{max(qty-1, 1)}'),
-               InlineKeyboardButton(f'{qty}', callback_data='product_nothing'),
-               InlineKeyboardButton('➕', callback_data=f'product_edit_{code}_{size}_{qty+1}'))
-    markup.add(InlineKeyboardButton('✅ افزودن به سبد خرید',
-               callback_data=f'product_add_{code}_{size}_{qty}'))
-    markup.add(InlineKeyboardButton(
-        "برگشت", callback_data=f"size_{code}_back"))
-    return markup
-
-
-def gen_cart_markup(code, size, qty):
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton('➖', callback_data=f'cart_edit_{code}_{size}_{max(qty-1, 1)}'),
-               InlineKeyboardButton(f'{qty}', callback_data='cart_nothing'),
-               InlineKeyboardButton('➕', callback_data=f'cart_edit_{code}_{size}_{qty+1}'))
-    markup.add(InlineKeyboardButton('❌ حذف از سبد خرید',callback_data=f'cart_delete_{code}_{size}'))
-    return markup
-
-
-
-def show_cart(cid):
-    list_shoppingcart=database.use_shopping_cart_table_where(f"cid={cid}")
-    price_total=0
-    for b in list_shoppingcart:
-        list_price=database.use_product_table_where(f"product_id={b['product_id']}")
-        for i in list_price:
-            price_total+=i["price"]*b["qty"]
-    if price_total==0:
-        return bot.edit_message_text("سبد خرید شما خالی است", cid,sssss)
-    markup2 = InlineKeyboardMarkup()
-    markup2.add(InlineKeyboardButton(
-                "خرید و ثبت نهایی", callback_data="shop_cart"))
-    return bot.edit_message_text(f"قیمت کل سبد خرید شما برابر است با :{price_total}", cid, sssss, reply_markup=markup2)
-
-
-@bot.message_handler(func=lambda m: m.text == "برگشت به منو ادمین")
-def back_menu_admin(m):
-    cid = m.chat.id
-    if cid==admin:
-        userStep[cid]=0
-        markup=ReplyKeyboardRemove()
-        bot.send_message(cid,"پنل ادمین",reply_markup=markup)
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(" افزودن محصول جدید",callback_data="admin_add"), InlineKeyboardButton("حذف محصول",callback_data="admin_delete"))
-        # markup.add(InlineKeyboardButton(" افزودن محصول جدید",callback_data="admin_add"))
-        markup.add(InlineKeyboardButton("ویرایش محصولات",callback_data="admin_edit"))
-        markup.add(InlineKeyboardButton("ارسال پیام به کاربران",callback_data="hamegani_send"),InlineKeyboardButton("فوروارد پیام به کاربران",callback_data="hamegani_forward"))
-        markup.add(InlineKeyboardButton("استفاده از ربات به عنوان کاربر",callback_data="use_as_user"))
-        bot.send_message(cid,"برای انجام تنظیمات از دکمه های زیر استفاده کنید",reply_markup=markup)
-
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==11)
-def add_product(m):
-    global mid_new_product
-    cid = m.chat.id
-    text=m.text
-    try:
-        list_text=text.split("\n")
-        brand=list_text[0]
-        name=list_text[1]
-        list_size=[]
-        list_price=[]
-        list_qty_stock=[]
-        for i in list_text[2:]:
-            i=i.split("@")
-            list_size.append(i[0])
-            list_price.append(i[1])
-            list_qty_stock.append(i[2])
-        mid=mid_new_product
-        database.add_product(brand,name,list_size,list_price,list_qty_stock,mid)
-        bot.send_message(cid,"اطلاعات ذخیره شد")
-        userStep[cid]=0
-    except:
-        bot.send_message(cid,"لطفا اطلاعات را مانند نمونه ارسال کنید")
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==15)
-def add_product_size(m):
-    global new_size_product
-    cid = m.chat.id
-    text=m.text
-    try:
-        list_text=text.split("\n")
-        list_size=[]
-        list_price=[]
-        list_qty_stock=[]
-        for i in list_text:
-            i=i.split("@")
-            list_size.append(i[0])
-            list_price.append(i[1])
-            list_qty_stock.append(i[2])
-        database.add_product(new_size_product["brand"],new_size_product["name"],list_size,list_price,list_qty_stock,new_size_product["code"])
-        bot.send_message(cid,"اطلاعات ذخیره شد")
-        userStep[cid]=0
-    except:
-        bot.send_message(cid,"لطفا اطلاعات را مانند نمونه ارسال کنید")
-
-
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==30)
-def send_message_customer(m):
-    cid = m.chat.id
-    mid=m.message_id
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"برای بازگشت به منو ادمین از دکمه استفاده کنید",reply_markup=markup)
-    markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("تایید",callback_data=f"hameconfirm_send_{mid}"),InlineKeyboardButton("ارسال مجدد",callback_data=f"hameconfirm_cancel_send"))
-    bot.send_message(cid,"پیام دریافت شد آن را تایید میکنید؟",reply_markup=markup)
-
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==31)
-def forward_message_customer_confirm(m):
-    cid = m.chat.id
-    mid=m.message_id
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"برای بازگشت به منو ادمین از دکمه استفاده کنید",reply_markup=markup)
-    markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("تایید",callback_data=f"hameconfirm_forward_{mid}"),InlineKeyboardButton("ارسال مجدد",callback_data=f"hameconfirm_cancel_forward"))
-    bot.send_message(cid,"پیام دریافت شد آن را تایید میکنید؟",reply_markup=markup)
 @bot.message_handler(content_types=["photo"])
 def photo_handler(m):
-    global mid_new_product
-    cid = m.chat.id
-    mid = m.message_id
-    if get_user_step(cid)==10:
-        userStep[cid]=11
-        info_pro=bot.copy_message(ch_id,cid,mid)
-        mid_new_product=info_pro.message_id
-        bot.send_message(cid,"لطفا در این مرحله نام , برند , سایز و قیمت محصول را مانند مثال ارسال کنید")
-        bot.copy_message(cid,ch_id,14)
-        
-    if get_user_step(cid)==100:
-        unblock(cid)
-        checking(cid)
-        if cid in block:
-            return
-        logging.info(f"{cid} send receipt")
-        tracking_code=random.randint(100000,999999)
-        list_shopp=database.use_shoppingcart_table_where(cid)
-        shopping_cart_stop.setdefault(cid,{})
-        shopping_cart_stop[cid].setdefault(tracking_code,[])
-        total_price=0
-        for i in list_shopp:
-            shopping_cart_stop[cid][tracking_code].append({"product_id":i["product_id"],"qty":i["qty"]})
-            total_price+=database.use_product_table_where(f"product_id={i['product_id']}")[0]["price"]*int(i["qty"])
-        database.delete_shopping_cart_table_cid(cid)
-        markup=InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("تایید رسید",callback_data="admin_confirm"),InlineKeyboardButton("رد رسید",callback_data="admin_reject"))
-        bot.copy_message(admin,cid,mid,reply_markup=markup,caption=f"{cid}**{tracking_code}")
-        bot.send_message(admin,f"""
-مبلغ سفارش 
-{total_price}
-تومان است
-""")
-        bot.send_message(cid,f"رسید شما برای تایید ارسال شد شماره پیگیری سفارش شما {tracking_code} است میتوتنید در بخش سوابق خرید سفارش خود را پیگیری کنید")
-        userStep[cid]=0
-    
-    elif get_user_step(cid)==30:
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"برای بازگشت به منو ادمین از دکمه استفاده کنید",reply_markup=markup)
-        markup=InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("تایید",callback_data=f"hameconfirm_send_{mid}"),InlineKeyboardButton("ارسال مجدد",callback_data=f"hameconfirm_cancel_send"))
-        bot.send_message(cid,"پیام دریافت شد آن را تایید میکنید؟",reply_markup=markup)
+    cid=m.chat.id
+    if get_user_step(cid)==3:
+        geam_info[cid].setdefault("photo",m.photo[0].file_id)
+        bot.send_message(cid,"لطفا تعداد نفرات شرکت کننده در بازی را مشخص کنید ",reply_markup=gen_number_markup(1))
 
-    elif get_user_step(cid)==31:
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"برای بازگشت به منو ادمین از دکمه استفاده کنید",reply_markup=markup)
-        markup=InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("تایید",callback_data=f"hameconfirm_forward_{mid}"),InlineKeyboardButton("ارسال مجدد",callback_data=f"hameconfirm_cancel_forward"))
-        bot.send_message(cid,"پیام دریافت شد آن را تایید میکنید؟",reply_markup=markup)
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("new_size"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("date"))
+def set_date(call):
+    gid = call.message.chat.id
+    cid=call.from_user.id
+    mid=call.message.message_id
     data=call.data.split("_")
-    new_size_product["code"]=data[2]
-    new_size_product["brand"]=data[3]
-    new_size_product["name"]=data[4]
-    bot.send_message(cid,f"""
-محصول انتخاب شده
-برند : {data[3]}
-اسم محصول : {data[4]}
+    bot.send_message(cid,
+f"""
+{data[1]}  {data[2]}
+لطفا ساعت شروع بازی را در تاریخ درج شده در بالا با فرمت (00:00) وارد کنید
 """)
-    bot.copy_message(cid,ch_id,50)
-    userStep[cid]=15
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("show_the_deetails"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data=call.data
-    code = data.split("_")[3]
-    list_product=database.use_product_table_where(f"code={int(code)}")
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("سایز ها و تعداد در انبار", callback_data="nothing"))
-    brand=""
-    name=""
-    for i in list_product:
-        brand=i["brand"]
-        name=i["name"]
-        markup.add(InlineKeyboardButton(f'سایز:{i["size"]}  تعداد:{i["qty_stock"]}', callback_data=f"changedqty_{code}_{i['size']}"))
-    markup.add(InlineKeyboardButton("افزودن سایز جدید",callback_data=f"new_size_{code}_{brand}_{name}"))
-    markup.add(InlineKeyboardButton("برگشت", callback_data=f"adback_{code}"))
-    bot.edit_message_reply_markup(cid, mid, reply_markup=markup)
-@bot.callback_query_handler(func=lambda call: call.data.startswith("use_as_user"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(KeyboardButton("محصولات"))
-    markup.add(KeyboardButton(" سبد خرید 🛒"), KeyboardButton(" حساب کاربری 👤"))
-    markup.add(KeyboardButton("ارتباط با ما 📞"), KeyboardButton("سوابق خرید📝"))
-    markup.add("برگشت به منو ادمین")
-    bot.send_message(cid, "سلام به فروشگاه فورس خوش آمدید")
-    bot.send_message(
-        cid, "برای استفاده از ربات از گزینه های زیر استفاده کنید", reply_markup=markup)
-@bot.callback_query_handler(func=lambda call: call.data.startswith("wait"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data = call.data.split("_")[1]
-    code=call.data.split("_")[2]
-    markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("حذف",callback_data=f"all_delete_{code}"),InlineKeyboardButton("لغو",callback_data=f"all_back_{code}"))
-    bot.edit_message_reply_markup(cid,mid,reply_markup=markup)
-
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("mesdelete"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    bot.delete_message(cid,mid)
-@bot.callback_query_handler(func=lambda call: call.data.startswith("all"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data = call.data.split("_")[1]
-    code=call.data.split("_")[2]
-    if data=="delete":
-        bot.delete_message(ch_id,code)
-        database.delete_product_table_code(code)
-        bot.delete_message(cid,mid)
-        bot.answer_callback_query(call.id,"محصول حذف شد")
-    elif data=="back":
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("حذف سایز مشخص",callback_data=f"delsize_{code}"))
-        markup.add(InlineKeyboardButton("حذف کامل محصول", callback_data=f"wait_delete_{code}"))
-        bot.edit_message_reply_markup(cid,mid,reply_markup=markup)
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("restart"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    data = call.data.split("_")[1]
-    if data=="cart":
-        cart(call.message)
-@bot.callback_query_handler(func=lambda call: call.data.startswith("delsize"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    if len(call.data.split("_"))==2:
-        code = call.data.split("_")[1]
-        list_product=database.use_product_table_where(f"code={int(code)}")
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("سایز ها", callback_data="nothing"))
-        for i in list_product:
-            markup.add(InlineKeyboardButton(f"حذف سایز:{i['size']}", callback_data=f"delsize_{code}_{i['size']}"))
-        markup.add(InlineKeyboardButton("برگشت",callback_data=f"delsize_back_{code}"))
-        bot.edit_message_reply_markup(cid,mid,reply_markup=markup)
-    elif len(call.data.split("_"))==3:
-        if call.data.split("_")[1]=="back":
-            code = call.data.split("_")[2]
-            markup = InlineKeyboardMarkup()
-            markup.add(InlineKeyboardButton("حذف سایز مشخص",callback_data=f"delsize_{code}"))
-            markup.add(InlineKeyboardButton("حذف کامل محصول", callback_data=f"wait_delete_{code}"))
-            bot.edit_message_reply_markup(cid,mid,reply_markup=markup)
+    temporary_time.setdefault(cid,"")
+    temporary_time[cid]=data[2]
+    if len(data)==4:
+        userStep[cid]=14
+    else:
+        userStep[cid]=5
+@bot.callback_query_handler(func=lambda call: call.data.startswith("present"))
+def present_def(call):
+    gid = call.message.chat.id
+    cid=call.from_user.id
+    mid=call.message.message_id
+    if len(mid_game_in_group[gid])>0:
+        list_cid=[]
+        for i in mid_game_in_group[gid]:
+            list_cid.append(mid_game_in_group[gid][i][0])
+        if cid in list_cid:
+            try:
+                time_send=datetime.datetime.strptime(game_info_in_group[gid]["time"],"%H:%M")-datetime.timedelta(minutes=15)
+                print(time_send)
+                ir_tz = pytz.timezone('Asia/Tehran')
+                time2 = datetime.datetime.strftime(datetime.datetime.now(ir_tz),"%H:%M")
+                time3=datetime.datetime.strptime(time2,"%H:%M")
+                if time_send<=time3:
+                    present_dict.setdefault(gid,[])
+                    if cid not in present_dict[gid]:
+                        present_dict[gid].append(cid)
+                        bot.answer_callback_query(call.id,"حضور شما ثبت شد")
+                        text=""
+                        total_number_reserv=[]
+                        for i in mid_game_in_group[gid]:
+                            total_number_reserv.append(i)
+                            name=mid_game_in_group[gid][i][1]
+                            text+=str(i)+"."+str(name)+"(حاضر)"+"\n"
+                        markup=InlineKeyboardMarkup()
+                        markup_button=[]
+                        for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                            if i in total_number_reserv:
+                                markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+                            else:
+                                markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+                        markup.add(*markup_button)
+                        markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+                        # markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{game_info_in_group[gid]['gruop_id']}"))
+                        markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario {gid} {mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer {gid} {mid}"))
+                        markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
+                        bot.edit_message_caption(
+f"""
+📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+👤کسانی که جوین شدند:
+~~~~~~~~~~~~~~~~~~
+{text}
+~~~~~~~~~~~~~~~~~~
+""",gid,mid,parse_mode="HTML",reply_markup=markup
+            )
+                    else:
+                        bot.answer_callback_query(call.id,"شما حضور خود را ثبت کرده اید")
+                else:
+                    bot.answer_callback_query(call.id,"هنوز زمان برای ثبت حضور نرسیده است")
+            except:
+                bot.answer_callback_query(call.id,"هنوز زمان برای ثبت حضور نرسیده است")
         else:
-            code = call.data.split("_")[1]
-            size=call.data.split("_")[2]
-            database.delete_product_table_code_size(int(code),float(size))
-            bot.answer_callback_query(call.id,f"محصول با کد {code} و سایز {size} حذف شد")
-            list_product=database.use_product_table_where(f"code={int(code)}")
-            markup = InlineKeyboardMarkup()
-            markup.add(InlineKeyboardButton("سایز ها", callback_data="nothing"))
-            for i in list_product:
-                markup.add(InlineKeyboardButton(f"حذف سایز:{i['size']}", callback_data=f"delsize_{code}_{i['size']}"))
-            markup.add(InlineKeyboardButton("برگشت",callback_data=f"delsize_back_{code}"))
-            bot.edit_message_reply_markup(cid,mid,reply_markup=markup)
+            bot.answer_callback_query(call.id,"شما در بازی نیستید")
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("admin"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data = call.data.split("_")[-1]
-    if data =="delete":
-        set_code=set()
-        list_product=database.use_product_table()
-        for i in list_product:
-            set_code.add(i["code"])
-        if 0 in set_code:
-            set_code.remove(0)
-        for i in set_code:
-            markup = InlineKeyboardMarkup()
-            markup.add(InlineKeyboardButton("حذف سایز مشخص",callback_data=f"delsize_{i}"))
-            markup.add(InlineKeyboardButton("حذف کامل محصول", callback_data=f"wait_delete_{i}"))
-            bot.copy_message(cid, ch_id, i,reply_markup=markup)
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"برای حذف محصول مورد نظر از دکمه های زیر محصولات استفاده کنید",reply_markup=markup)
-    elif data=="edit":
-        set_code=set()
-        list_product=database.use_product_table()
-        for i in list_product:
-            set_code.add(i["code"])
-        for i in set_code:
-            markup = InlineKeyboardMarkup()
-            markup.add(InlineKeyboardButton("مشاهده جزئیات",callback_data=f"show_the_deetails_{i}"))
-            mid_p=bot.copy_message(cid, ch_id, i,reply_markup=markup)
-            edit_deerails_admin.setdefault(cid,{})
-            edit_deerails_admin[cid].setdefault(i, {})
-            edit_deerails_admin[cid][i]["mid"] = mid_p.message_id
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"برای مشاهده و تغییر تعداد محصولات در انبار از دکمه های زیر هر محصول استفاده کنید",reply_markup=markup)
-    elif data == "add":
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"لطفا برای افزودن محصول عکس محصول و توضیحات آن را در کپشن عکس نوشته و ارسال کنید(مانند نمونه) ",reply_markup=markup)
-        markup=InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("نمونه ارسال پیام درست"))
-        userStep[cid]=10
-        bot.copy_message(int(cid),ch_id,5)
-        userStep[cid]=10
-    elif data =="confirm":
-        uid=int(call.message.caption.split("**")[0])
-        tracking_code=int(call.message.caption.split("**")[-1])
-        database.insert_sales_table(uid,tracking_code)
-        list_shop=shopping_cart_stop[uid][tracking_code]
-        for i in list_shop:
-            database.insert_sales_row_table(tracking_code,i["product_id"],i["qty"])
-            qty_in_stock=database.use_product_table_where(f"product_id={i['product_id']}")[0]["qty_stock"]
-            res=int(qty_in_stock)-int(i["qty"])
-            database.update_product_table(i["product_id"],res)
-        shopping_cart_stop[uid].pop(tracking_code)
-        bot.send_message(uid,"رسید شما تایید شد ممنون از خرید شما میتوانید در بخش 'سوابق خرید' خرید خود را مشاهده کنید")
-        logging.info(f"cid={uid} confirm receipt") 
-    elif data =="reject":
-        uid=int(call.message.caption.split("**")[0])
-        tracking_code=int(call.message.caption.split("**")[-1])
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(KeyboardButton("منوی اصلی "), KeyboardButton(" سبد خرید 🛒"))
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        list_shop=shopping_cart_stop[uid][tracking_code]
-        for i in list_shop:
-            database.insert_shopping_cart_table(uid,i["product_id"],i["qty"])
-        shopping_cart_stop[uid].pop(tracking_code)
-        bot.send_message(uid,"رسیدی که شما ارسال کردید معتبر نمیباشد سفارش شما به سبد خریدتان بازگشت لطفا برای خرید به سبد خرید بروید و رسید معتبری ارسال کنید",reply_markup=markup)
-        logging.info(f"cid={uid} reject receipt")
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("send_receipt"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    bot.send_message(cid,"لطفا عکس رسید خود را به صورت واضح ارسال کنید")
-    userStep[cid]=100
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("shop_cart"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    list_shoppingcart=database.use_shopping_cart_table_where(f"cid={cid}")
-    price_total=0
-    for b in list_shoppingcart:
-        list_price=database.use_product_table_where(f"product_id={b['product_id']}")
-        for i in list_price:
-            price_total+=i["price"]*b["qty"]
-    bot.delete_message(cid,mid)
-    dict_info_user=database.use_customer_table_where(f"cid={cid}")
-    if dict_info_user["phone"]!=None and dict_info_user["name"]!=None and dict_info_user["address"]!=None:
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("ارسال رسید",callback_data="send_receipt"))
-        bot.send_message(cid,f"""
-    قیمت : {price_total}
-    لطفا دقیقا مبلغ بالا را به شماره کارت زیر ارسال کنید و سپس با استفاده از دکمه زیر رسید خود را ارسال کنید
-    شماره کارت : 00600606006006000600
-    """,reply_markup=markup)
     else:
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(" حساب کاربری 👤")
-        markup.add("منوی اصلی")
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"کاربر گرامی لطفا ابتدا در بخش 'حساب کاربری' اطلاعات خود را تکمیل کنید ",reply_markup=markup)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("cart"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    data = call.data
-    ch = data.split("_")[1]
-    if ch == 'edit':
-        alki, command, code, size, qty = data.split('_')
-        list_product_id=database.use_product_table_where(f"code={code} and size={size}")
-        for i in list_product_id:
-            product_id=i["product_id"]
-            qty_stock=i["qty_stock"]
-        if int(qty)>int(qty_stock):
-            bot.answer_callback_query(call.id,"متاسفانه از این محصول بیشتر از این تعداد در انبار وجود ندارد")
-        else:
-            list_shoppingcart=database.use_shopping_cart_table(cid,product_id)
-            if len(list_shoppingcart)==0:
-                database.insert_shopping_cart_table(cid,product_id,int(qty))
-            else:
-                database.update_shopping_cart_table(cid,product_id,int(qty))
-
-            list_price=database.use_product_table_where(f"code={int(code)} and size={float(size)}")
-            for i in list_price:
-                bot.edit_message_caption(f"تعداد :'{qty}' با سایز '{size}' از این محصول. قیمت :{i['price']*int(qty)}",cid, mid, reply_markup=gen_cart_markup(code, size, int(qty)))
-
-
-        show_cart(cid)
-    elif ch == 'delete':
-        alki, command, code, size = data.split('_')
-        product_id_j=database.use_product_table_where(f"code={int(code)} and size={float(size)}")[0]["product_id"]
-        database.delete_shopping_cart_table(cid,product_id_j)
-        bot.delete_message(cid, mid)
-        show_cart(cid)
-    elif ch == 'nothing':
-        pass
-    else:
-        bot.edit_message_reply_markup(cid, mid, reply_markup=None)
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("size"))
-def size_p(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    data = call.data
-    code = data.split("_")[1]
-    list_product=database.use_product_table_where(f"code={int(code)}")
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("سایز ها", callback_data="nothing"))
-    for i in list_product:
-        markup.add(InlineKeyboardButton(f'سایز:{i["size"]}  قیمت:{i["price"]}', callback_data=f"sele_{code}_{i['size']}"))
-    markup.add(InlineKeyboardButton("برگشت", callback_data=f"delete_{code}"))
-    if len(data.split("_")) == 3:
-        bot.edit_message_reply_markup(cid, mid, reply_markup=markup)
-    else:
-        bot.edit_message_reply_markup(
-                    cid, products[cid][int(code)]["mid"], "سایز مورد نظر را انتخاب کنید", reply_markup=markup)
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("adback"))
-def size_p(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data = call.data.split("_")
-    # bot.delete_message(cid, mid)
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("مشاهده جزئیات",callback_data=f"show_the_deetails_{data[1]}"))
-    bot.edit_message_reply_markup(cid,message_id=edit_deerails_admin[cid][int(data[1])]["mid"], reply_markup=markup)
-@bot.callback_query_handler(func=lambda call: call.data.startswith("delete"))
-def size_p(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    data = call.data.split("_")
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(
-        "انتخاب سایز", callback_data=f"size_{data[1]}"))
-    bot.edit_message_reply_markup(cid,message_id=products[cid][int(data[1])]["mid"], reply_markup=markup)
+        bot.answer_callback_query(call.id,"شما در بازی نیستید")
 
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("changedqty"))
-def nmayesh(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data = call.data
-    comm, code, size = data.split("_")
-    list_product_id=database.use_product_table_where(f"code={code} and size={size}")
-    for i in list_product_id:
-        product_id=i["product_id"]
-    qty_in_stock=database.use_product_table_where(f"product_id={product_id}")[0]["qty_stock"]
-    markup = gen_product_markup_admin(code, size, qty_in_stock)
-    bot.edit_message_reply_markup(cid, mid, reply_markup=markup)
-@bot.callback_query_handler(func=lambda call: call.data.startswith("sele"))
-def nmayesh(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    data = call.data
-    comm, code, size = data.split("_")
-    list_product_id=database.use_product_table_where(f"code={code} and size={size}")
-    for i in list_product_id:
-        product_id=i["product_id"]
-    qty_in_stock=database.use_product_table_where(f"product_id={product_id}")[0]["qty_stock"]
-    if qty_in_stock>0:
-        list_shoppingcart=database.use_shopping_cart_table(cid,product_id)
-        if len(list_shoppingcart)==0:
-            qty=1
-        else:
-            for i in list_shoppingcart:
-                qty=i["qty"]
 
-        markup = gen_product_markup(code, size, qty)
-        bot.edit_message_reply_markup(cid, mid, reply_markup=markup)
-    else:
-        bot.answer_callback_query(call.id,"در حال حاضر این سایز محصول در انبار موجود نمیباشد")
-
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("updqtystock"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    data = call.data
-    ch = data.split("_")[1]
-    if ch == 'edit':
-        alki, command, code, size, qty = data.split('_')
-        bot.edit_message_reply_markup(cid, mid, reply_markup=gen_product_markup_admin(code, size, int(qty)))
-    elif ch == 'nothing':
-        pass
-    elif ch == 'add':
-        alki, command, code, size, qty = data.split('_')
-        list_product_id=database.use_product_table_where(f"code={code} and size={size}")
-        
-        for i in list_product_id:
-            product_id=i["product_id"]
-            database.update_product_table(product_id,int(qty))
-        bot.answer_callback_query(call.id, f'تعداد موجود در انبار آپدیت شد')
-        markup2 = InlineKeyboardMarkup()
-        markup2.add(InlineKeyboardButton("برگشت", callback_data=f"show_the_deetails_{code}"))
-        bot.edit_message_reply_markup(cid, mid, reply_markup=markup2)
-    else:
-        bot.edit_message_reply_markup(cid, mid, reply_markup=None)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("product"))
-def call_callback_data(call):
-    cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
-    data = call.data
-    ch = data.split("_")[1]
-    if ch == 'edit':
-        alki, command, code, size, qty = data.split('_')
-        list_product_id=database.use_product_table_where(f"code={code} and size={size}")
-        for i in list_product_id:
-            qty_stock=i["qty_stock"]
-        if int(qty)>int(qty_stock):
-            bot.answer_callback_query(call.id,"متاسفانه از این محصول بیشتر از این تعداد در انبار وجود ندارد")
-        else:
-            bot.edit_message_reply_markup(cid, mid, reply_markup=gen_product_markup(code, size, int(qty)))
-        
-    elif ch == 'nothing':
-        pass
-    elif ch == 'add':
-        alki, command, code, size, qty = data.split('_')
-        list_product_id=database.use_product_table_where(f"code={code} and size={size}")
-        
-        for i in list_product_id:
-            product_id=i["product_id"]
-            shopp_cart=database.use_shopping_cart_table(cid,product_id)
-            if len(shopp_cart)==0:
-                qty=int(qty)
-                database.insert_shopping_cart_table(cid,product_id,qty)
-            else:
-                qty=int(qty)
-                database.update_shopping_cart_table(cid,product_id,qty)
-
-        bot.answer_callback_query(call.id, f'item added to basket')
-        markup2 = InlineKeyboardMarkup()
-        markup2.add(InlineKeyboardButton(
-            "برگشت", callback_data=f"size_{code}_back"))
-        bot.edit_message_reply_markup(cid, mid, reply_markup=markup2)
-    else:
-        bot.edit_message_reply_markup(cid, mid, reply_markup=None)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("hamegani"))
-def edite_infi_cust(call):
-    cid = call.message.chat.id
+@bot.callback_query_handler(func=lambda call: call.data.startswith("sobjoin"))
+def sobjoin_admin(call):
+    cid= call.message.chat.id
+    mid=call.message.message_id
+    markup=ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("کنسل")
+    bot.send_message(cid,"لطفا نام کاربری شخصی که میخواهید او را ادمین کنید وارد کنید:",reply_markup=markup)
+    userStep[cid]=300
+@bot.callback_query_handler(func=lambda call: call.data.startswith("chanel"))
+def select_chanel_new(call):
+    cid= call.message.chat.id
+    data=call.data.split("_")
+    mid=call.message.message_id
+    markup=ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("کنسل")
+    bot.send_message(cid,"برای اضافه کردن یک کانال لطفا ابتدا ربات را در آن کانال اد و ادمین کنید سپس یک پیام از همان کانال را در اینجا فوروارد کنید\nدر صورت لغو عملیات از دکمه کنسل استفاده کنید.",reply_markup=markup)
+    userStep[cid]=200
+@bot.callback_query_handler(func=lambda call: call.data.startswith("seting"))
+def select_chanel(call):
+    cid= call.message.chat.id
     data=call.data.split("_")[1]
     mid=call.message.message_id
-    if data=="send":
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"لطفا برای ارسال پیام به کاربران پیام خود را ارسال کنید",reply_markup=markup)
-        userStep[cid]=30
-    elif data=="forward":
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"لطفا برای فوروارد پیام به کاربران خود پیام را ارسال کنید",reply_markup=markup)
-        userStep[cid]=31
+    tuple_game=database.use_games(cid)[int(data)]
+    geam_info.setdefault(cid,{})
+    geam_info[cid]={"name":tuple_game[0],"photo":tuple_game[2],"number":tuple_game[3],"link_info":tuple_game[1],"time":tuple_game[4],"gruop_id":tuple_game[5],"gruop_name":tuple_game[6],"nazer":tuple_game[7],"name_nazer":tuple_game[8]}
+    select_chanel_and_check(call)
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete"))
+def select_chanel(call):
+    cid= call.message.chat.id
+    data=call.data.split("_")[1]
+    mid=call.message.message_id
+    tuple_game=database.use_games(cid)[int(data)]
+    database.delete_games(tuple_game[0],tuple_game[1],tuple_game[1],tuple_game[9])
+    bot.delete_message(cid,mid)
+    bot.answer_callback_query(call.id,"بازی حذف شد")
+    
+@bot.callback_query_handler(func=lambda call: call.data.startswith("list"))
+def select_chanel(call):
+    cid= call.message.chat.id
+    list_game=database.use_games(cid)
+    if len(list_game)>0:
+        total_num=0
+        for i in list_game:
+            markup=InlineKeyboardMarkup()
+            markup.add(InlineKeyboardButton("حذف",callback_data=f"delete_{total_num}"))
+            markup.add(InlineKeyboardButton("تنظیمات",callback_data=f"seting_{total_num}_0"))
+            bot.send_photo(cid,i[2],
+f"""
+📜سناریو:  <a href='{i[1]}'>{i[0]}</a>
+🕰ساعت شروع:{i[4]}
+👥نام گروه :{i[6]}
+🎩ناظر:<a href='https://t.me/{i[7].replace("@","")}'>{i[8]}</a>
+تعداد بازیکنان :{i[3]}
+""",parse_mode="HTML",reply_markup=markup)
+            total_num+=1
+           
+    else:
+        bot.answer_callback_query(call.id,"شما هنوز بازی ذخیره نکرده اید")
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("hameconfirm"))
-def edite_infi_cust(call):
+@bot.callback_query_handler(func=lambda call: call.data.startswith("cancel"))
+def select_chanel(call):
+    gid = call.message.chat.id
+    cid=call.from_user.id
+    mid=call.message.message_id
+    all_cid_reserv={}
+    if len(mid_game_in_group[gid])>0:
+        for i in mid_game_in_group[gid]:
+            all_cid_reserv.setdefault(mid_game_in_group[gid][i][0],i)
+        if cid in all_cid_reserv:
+            total_number_reserv=[] 
+            all_cid_reserv=all_cid_reserv.pop(cid)
+            mid_game_in_group[gid].pop(int(all_cid_reserv))
+            text=""
+            for i in mid_game_in_group[gid]:
+                total_number_reserv.append(i)
+                name=mid_game_in_group[gid][i][1]
+                text+=str(i)+"."+str(name)+"\n"
+            markup=InlineKeyboardMarkup()
+            # markup_button=[]
+            # markup_button1=[]
+            # if int(game_info_in_group[gid]["number"])%2==0:
+            #     for i in range(1,int(game_info_in_group[gid]["number"])//2+1):
+            #         if i in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+            #     for b in range(int(game_info_in_group[gid]["number"])//2+1,int(game_info_in_group[gid]["number"])+1):
+            #         if b in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button1.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+            # else:
+            #     for i in range(1,int(game_info_in_group[gid]["number"])//2+2):
+            #         if i in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+            #     for b in range(int(game_info_in_group[gid]["number"])//2+2,int(game_info_in_group[gid]["number"])+1):
+            #         if b in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button1.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+            # markup.add(*markup_button)
+            # markup.add(*markup_button1)
+            markup_button=[]
+            for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                if i in total_number_reserv:
+                    markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+                else:
+                    markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+            markup.add(*markup_button)
+            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+            markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario {gid} {mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer {gid} {mid}"))
+            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
+            bot.edit_message_caption(
+f"""
+📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+👤کسانی که جوین شدند:
+~~~~~~~~~~~~~~~~~~
+{text}
+~~~~~~~~~~~~~~~~~~
+""",gid,mid,reply_markup=markup,parse_mode="HTML"
+            )
+            bot.answer_callback_query(call.id,"انصراف شما انجام شد")
+        else:
+            bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
+    else:
+        bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("admin"))
+def select_chanel(call):
+    gid = call.message.chat.id
+    cid=call.from_user.id
+    mid=call.message.message_id
+    data=call.data.split("_")
+    if data[1]=="cancel":
+        if cid in admin:
+            bot.delete_message(gid,mid)
+            game_info_in_group.pop(gid)
+            mid_game_in_group.pop(gid)
+            present_dict.pop(gid)
+            bot.answer_callback_query(call.id,"بازی حذف شد")
+        else:
+            bot.answer_callback_query(call.id,"این قابلیت برای ادمین است")
+    elif data[1]=="start":
+        if cid in admin:
+            if len(mid_game_in_group[gid])>0:
+                group_name = game_info_in_group[gid]["name"]
+                # new_group = bot.create_chat(title=group_name, type='supergroup')
+                # bot.create_chat_invite_link(cid,"mahdi")
+                for i in mid_game_in_group[gid]:
+                    bot.send_message(mid_game_in_group[gid][i][0],"لینک ورود به بازی برای شروع بازی روی لینک زیر بزنید")
+                
+                total_number_reserv=[] 
+                all_cid_reserv=all_cid_reserv.pop(cid)
+                mid_game_in_group[gid].pop(int(all_cid_reserv))
+                text=""
+                for i in mid_game_in_group[gid]:
+                    total_number_reserv.append(i)
+                    name=mid_game_in_group[gid][i][1]
+                    text+=str(i)+"."+str(name)+"\n"
+
+                bot.edit_message_caption(
+        f"""
+📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+👤کسانی که جوین شدند:
+~~~~~~~~~~~~~~~~~~
+{text}
+~~~~~~~~~~~~~~~~~~
+بازی در حال اجرا
+""",gid,mid,parse_mode="HTML"
+                )
+
+
+                mid_game_in_group.pop(gid)
+                game_info_in_group.pop(gid)
+                present_dict.pop(gid)
+            else:
+                bot.answer_callback_query(call.id,"هنوز هیچ شرکت کننده ای برای شروع بازی وجود ندارد")
+        else:
+            bot.answer_callback_query(call.id,"این قابلیت برای ادمین است")
+    elif data[2]=="senario":
+        if cid in admin:
+            mm=bot.reply_to(mid,"لطفا برای تغییر سناریو بازی روی این پیام ریپلای بزنید و اسم سناریو و لینک توضیحات را مانند نمونه ارسال کنید")
+            print(mm)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("reserv"))
+def select_chanel(call):
+    gid = call.message.chat.id
+    cid=call.from_user.id
+    mid=call.message.message_id
+    data=call.data.split("_")[-1]
+    if data=="ok":
+        bot.answer_callback_query(call.id,"این شماره قبلا رزرو شده است")
+        return
+    list_user_login=database.use_users()
+    list_cid_user={}
+    for i in list_user_login:
+        list_cid_user.setdefault(i[0],i[1])  
+    if cid in list_cid_user:
+        total_number_reserv=[]
+        all_cid_reserv=[]
+        mid_game_in_group.setdefault(gid,{})
+        if len(mid_game_in_group[gid])>0:
+            for i in mid_game_in_group[gid]:
+                all_cid_reserv.append(mid_game_in_group[gid][i][0])
+        if cid not in all_cid_reserv:
+            mid_game_in_group[gid].setdefault(int(data),[cid,list_cid_user[cid],mid])
+            text=""
+            for i in mid_game_in_group[gid]:
+                total_number_reserv.append(i)
+                name=mid_game_in_group[gid][i][1]
+                text+=str(i)+"."+str(name)+"\n"
+            markup=InlineKeyboardMarkup()
+            # markup_button=[]
+            # markup_button1=[]
+            # if int(game_info_in_group[gid]["number"])%2==0:
+            #     for i in range(1,int(game_info_in_group[gid]["number"])//2+1):
+            #         if i in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+            #     for b in range(int(game_info_in_group[gid]["number"])//2+1,int(game_info_in_group[gid]["number"])+1):
+            #         if b in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button1.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+            # else:
+            #     for i in range(1,int(game_info_in_group[gid]["number"])//2+2):
+            #         if i in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+            #     for b in range(int(game_info_in_group[gid]["number"])//2+2,int(game_info_in_group[gid]["number"])+1):
+            #         if b in total_number_reserv:
+            #             markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+            #         else:
+            #             markup_button1.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+
+            # markup.add(*markup_button)
+            # markup.add(*markup_button1)
+            markup_button=[]
+            for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                if i in total_number_reserv:
+                    markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+                else:
+                    markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+            markup.add(*markup_button)
+
+            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+            markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario {gid} {mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer {gid} {mid}"))
+            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
+            bot.edit_message_caption(
+    f"""
+📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+👤کسانی که جوین شدند:
+~~~~~~~~~~~~~~~~~~
+{text}
+~~~~~~~~~~~~~~~~~~
+""",gid,mid,reply_markup=markup,parse_mode="HTML"
+            )
+            # if len(total_number_reserv)==int(game_info_in_group[gid]["number"]):
+
+        
+        else:
+            bot.answer_callback_query(call.id,"شما قبلا در این بازی رزور شده اید")
+    else:
+        bot.answer_callback_query(call.id,"لطفا با استفاده از دکمه ثبت نام وارد ربات شوید و ثبت نام کنید")
+
+
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("login"))
+def select_chanel(call):
+    cid = call.message.chat.id
+    bot.send_message(cid,"لطفا نام کاربری خود را وارد کنید:")
+    userStep[cid]=20
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("confirm"))
+def select_chanel(call):
+    cid = call.message.chat.id
+    markup=InlineKeyboardMarkup()
+    # markup_button=[]
+    # markup_button1=[]
+    # if int(geam_info[cid]["number"])%2==0:
+    #     for i in range(1,int(geam_info[cid]["number"])//2+1):
+    #         markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+    #     for b in range(int(geam_info[cid]["number"])//2+1,int(geam_info[cid]["number"])+1):
+    #         markup_button1.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+    # else:
+    #     for i in range(1,int(geam_info[cid]["number"])//2+2):
+    #         markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+    #     for b in range(int(geam_info[cid]["number"])//2+2,int(geam_info[cid]["number"])+1):
+    #         markup_button1.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+    # markup.add(*markup_button)
+    # markup.add(*markup_button1)
+    markup_button=[]
+    for i in range(1,int(geam_info[cid]["number"])+1):
+        markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+    markup.add(*markup_button)
+    markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{geam_info[cid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{geam_info[cid]['gruop_id']}"))
+    markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_change_senario_{geam_info[cid]['gruop_id']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_change_nazer_{geam_info[cid]['gruop_id']}"))
+    # markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario {gid} {mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer {gid} {mid}"))
+    markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{geam_info[cid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{geam_info[cid]['gruop_id']}"))
+    bot.send_photo(geam_info[cid]["gruop_id"],geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+👤کسانی که جوین شدند:
+~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+""",parse_mode='HTML',reply_markup=markup)
+    userStep[cid]=0
+    game_info_in_group.setdefault(int(geam_info[cid]["gruop_id"]),{})
+    game_info_in_group[int(geam_info[cid]["gruop_id"])]=geam_info[cid]
+    geam_info.pop(cid)
+@bot.callback_query_handler(func=lambda call: call.data.startswith("change"))
+def select_chanel(call):
+    cid = call.message.chat.id
+    data= call.data.split("_")[-1]
+    if data=="scenario":
+        bot.send_message(cid,"اسم سناریو بازی را ارسال کنید:")
+        userStep[cid]=11
+    elif data=="link":
+        bot.send_message(cid,"لینک توضیح سناریو بازی را وارد کنید:")
+        userStep[cid]=12
+    elif data=="number":
+        bot.send_message(cid,"تعداد نفرات شرکت کننده در بازی را وارد کنید:",reply_markup=gen_number_markup_change(int(geam_info[cid]["number"])))
+        userStep[cid]=13
+    elif data=="time":
+        dict_weak=terikh.dict_time_now()
+        markup=InlineKeyboardMarkup()
+        for i in dict_weak:
+            markup.add(InlineKeyboardButton(f"{i} {dict_weak[i]}",callback_data=f"date_{i}_{dict_weak[i]}_0"))
+        # markup.add(InlineKeyboardButton("به محض تکمیل لیست",callback_data="complete_list"))
+        bot.send_message(cid,"لطفا زمان شروع بازی را مشخص کنید ",reply_markup=markup)
+        # bot.send_message(cid,"تایم شروع بازی را وارد کنید (فرمت 00:00):")
+        # userStep[cid]=14
+    elif data=="group":
+        list_dict_grups=database.use_table_admin_group()
+        markup=InlineKeyboardMarkup()
+        for i in list_dict_grups:
+            markup.add(InlineKeyboardButton(i[1],callback_data=f"select_ghange_{i[0]}_{i[1]}"))
+        bot.send_message(cid,"گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید",reply_markup=markup)
+        userStep[cid]=15
+    elif data=="nazer":
+        bot.send_message(cid,"یوزر ناظر به همراه اسم ناظر را مانند نمونه ارسال کنید(@nazer ناظر)")
+        userStep[cid]=16
+
+    
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("complete_list"))
+def select_chanel(call):
+    cid = call.message.chat.id
+    text="به محض تکمیل لیست"
+    geam_info.setdefault(cid,{})
+    geam_info[cid].setdefault("time",text)
+    markup=InlineKeyboardMarkup()
+    list_dict_grups=database.use_table_admin_group()
+    print(list_dict_grups)
+    grup_ok=False
+    if len(list_dict_grups)>0:
+        for i in list_dict_grups:
+            if is_bot_admin(i[0]):
+                markup.add(InlineKeyboardButton(i[1],callback_data=f"select_{i[0]}_{i[1]}"))
+                grup_ok=True
+    else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"ربات شما در گروهی عضو نیست لطفا برای ارسال بازی در گروه ربات را در آن گروه اد کنید و ادمین کنید.\nسپس دکمه سرچ را بزنید.\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+        userStep[cid]=0
+        return
+    if grup_ok:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"لطفا گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید:\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+    else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"لطفا ربات را در گروه هایی که میخواهید بازی را ارسال کنید ادمین کنید.\nسپس دکمه سرچ را بزنید\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+    userStep[cid]=0
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("adding"))
+def adding(call):
+    cid = call.message.chat.id
+    # try:
+    print(geam_info)
+    database.insert_games(geam_info[cid]["name"],geam_info[cid]["link_info"],geam_info[cid]["photo"],int(geam_info[cid]["number"]),geam_info[cid]["time"],geam_info[cid]["gruop_id"],geam_info[cid]["gruop_name"],geam_info[cid]["nazer"],geam_info[cid]["name_nazer"],cid)
+    bot.answer_callback_query(call.id,"بازی در حافظه ذخیره شذ")
+    # except:
+    #     bot.answer_callback_query(call.id,"قبلا بازی با این لینک ذخیره کرده اید لطفا برای ثبت بازی جدید با همین لینک بازی قبلی را حذغ کنید")
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("select"))
+def select_chanel_and_check(call):
     cid = call.message.chat.id
     data=call.data.split("_")
-    mid = call.message.message_id 
-    if data[1]=="cancel":
-        userStep[cid]=0
-        if data[2]=="send":
-            bot.send_message(cid,"لطفا برای ارسال پیام به کاربران پیام خود را ارسال کنید")
-            userStep[cid]=30
-        elif data[2]=="forward":
-            bot.send_message(cid,"لطفا برای فوروارد پیام به کاربران خود پیام را ارسال کنید")
-            userStep[cid]=31
-    count=0  
-    count_black=0
-    if data[1] =="send":
-        list_user=database.use_customer_table()
-        for i in list_user:
-            try:
-                bot.copy_message(i["cid"],cid,int(data[-1]))
-                count+=1
-            except:
-                count_black+=1
-
-        text=f"به {count} کاربر با موفقیت ارسال شد"
-        if count_black!=0:
-            text=f"\n{count_black} نفر ربات را بلاک کرده اند پیام به آنها ارسال نشد"
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.delete_message(cid,mid)
-        bot.send_message(cid,text,reply_markup=markup)
-        userStep[cid]=0
-    if data[1] =="forward":
-        list_user=database.use_customer_table()
-        for i in list_user:
-            try:
-                bot.forward_message(i["cid"],cid,int(data[-1]))
-                count+=1
-            except:
-                count_black+=1
-
-        text=f"به {count} کاربر با موفقیت ارسال شد"
-        if count_black!=0:
-            text=f"\n{count_black} نفر ربات را بلاک کرده اند پیام به آنها ارسال نشد"
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("برگشت به منو ادمین")
-        bot.delete_message(cid,mid)
-        bot.send_message(cid,text,reply_markup=markup)
+    # geam_info.setdefault("")
+    if len(data)==4:
+        geam_info[cid]["gruop_name"]=data[-1]
+        geam_info[cid]["gruop_id"]=data[-2]
+        markup=InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+        markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+        markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+        markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+        markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+        markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+        markup.add(InlineKeyboardButton("اضافه کردن بازی به حافظه",callback_data="adding"))
+        markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+        bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
         userStep[cid]=0
 
+    elif len(data)==3:
+        geam_info[cid].setdefault("gruop_name",data[-1])
+        geam_info[cid].setdefault("gruop_id",data[1])
+        # database.insert_games(geam_info[cid]["name"],geam_info[cid]["link_info"],geam_info[cid]["photo"],int(geam_info[cid]["number"]))
+        markup=InlineKeyboardMarkup()
+        # markup_button=[]
+        # if int(geam_info[cid]["number"])%2==0:
+        #     for i in range(1,int(geam_info[cid]["number"])//2+1):
+        #         markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+        #     for b in range(int(geam_info[cid]["number"])//2+1,int(geam_info[cid]["number"])+1):
+        #         markup_button.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+        # else:
+        #     for i in range(1,int(geam_info[cid]["number"])//2+2):
+        #         markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+        #     for b in range(int(geam_info[cid]["number"])//2+2,int(geam_info[cid]["number"])+1):
+        #         markup_button.append(InlineKeyboardButton(f"{b}",callback_data=f"reserve_{b}"))
+        # # markup.add(tuple(markup_button))
+        # markup.add(InlineKeyboardButton("ثبت نام در ربات",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("انصراف",callback_data=f"cancel_{data[-1]}"))
+        markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+        markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+        markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+        markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+        markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+        markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+        markup.add(InlineKeyboardButton("اضافه کردن بازی به حافظه",callback_data="adding"))
+        markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+        bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("info_edit"))
-def edite_infi_cust(call):
+@bot.callback_query_handler(func=lambda call: call.data.startswith("again"))
+def again_chanel(call):
     cid = call.message.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    mid = call.message.message_id
+    creat_geam_3(call.message)
+@bot.callback_query_handler(func=lambda call: call.data.startswith("creat"))
+def creat_senaryo(call):
+    cid = call.message.chat.id
     markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("منوی اصلی")
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"لطفا اطلاعات خود را به ترتیب خواسته شده وارد کنید.")
-    bot.send_message(cid,'نام خود را وارد کنید:',reply_markup=markup)
-    userStep[cid] = 1
+    markup.add("کنسل")
+    bot.send_message(cid,"لطفا نام سناریو بازی را ارسال کنید:",reply_markup=markup)
+    userStep[cid]=1
 
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("number"))
+def call_callback_data_number(call):
+    cid = call.message.chat.id
+    mid = call.message.message_id
+    data = call.data.split("_")
+    if len(data)==2:
+        bot.edit_message_reply_markup(cid,mid,reply_markup=gen_number_markup(int(data[-1])))
+    elif len(data)==3 and data[1]=="add":
+        geam_info[cid].setdefault("number",data[-1])
+        bot.answer_callback_query(call.id,"تعداد ثبت شد")
+        bot.send_message(cid,"لطفا آی دی ناظر را ارسال کنید:(مثال:@nazer)")
+        userStep[cid]=4
+    elif len(data)==3:
+        bot.edit_message_reply_markup(cid,mid,reply_markup=gen_number_markup_change(int(data[-1])))
+    elif len(data)==4:
+        geam_info[cid]["number"]=int(data[3])
+        markup=InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+        markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+        markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+        markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+        markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+        markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+        markup.add(InlineKeyboardButton("اضافه کردن بازی به حافظه",callback_data="adding"))
+        markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+        bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
+
+
+
+
+
+
+
+# @bot.channel_post_handler(content_types=['new_chat_members'])
+# def handle_new_channel_member(message):
+#     # Assuming you want to store information about the channel and the member
+#     channel_id = message.chat.id
+#     member_id = message.new_chat_member.id
+#     member_username = message.new_chat_member.username
+
+#     # Here you can store this information in a database or any other storage mechanism
+#     # For simplicity, let's just print it for now
+#     print(f"New member joined channel {channel_id}: {member_username} ({member_id})")
+
+
+@bot.message_handler(func=lambda m: True, content_types=['new_chat_members'])
+def handle_new_member(m):
+    print(m)
+    print("pkkkkkkkk")
+    group_id = m.chat.id
+    cid=m.from_user.id
+    print(m.chat.title)
+    bot_info=bot.get_me()
+    if m.new_chat_members[0].username==bot_info.username:
+        try:
+            database.insert_group(group_id,m.chat.title)
+        except:
+            pass
+        
 
 @bot.message_handler(commands=['start'])
 def command_start(m):
     cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    userStep.setdefault(cid,0)
-    logging.info(f"cid={cid},name={m.from_user.first_name} start bot")
-    database.create_one_customer(cid,"name",f"{m.from_user.first_name}")
-    if cid == admin:
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(" افزودن محصول جدید",callback_data="admin_add"), InlineKeyboardButton("حذف محصول",callback_data="admin_delete"))
-        # markup.add(InlineKeyboardButton(" افزودن محصول جدید",callback_data="admin_add"))
-        markup.add(InlineKeyboardButton("ویرایش محصولات",callback_data="admin_edit"))
-        markup.add(InlineKeyboardButton("ارسال پیام به کاربران",callback_data="hamegani_send"),InlineKeyboardButton("فوروارد پیام به کاربران",callback_data="hamegani_forward"))
-        markup.add(InlineKeyboardButton("استفاده از ربات به عنوان کاربر",callback_data="use_as_user"))
-        bot.send_message(cid,"سلام ادمین گرامی خوش آمدید برای استفاده از ربات از دکمه های زیر استفاده کنید",reply_markup=markup)
+    # bot_member = bot.get_chat_member(chat_id, 6926746273)
+    # print("staaaaaaaaaaaaatos",bot_member)
+    if len(owner)==0:
+        owner.append(cid)
+        admin.append(cid)
+    if cid in owner:
+        if cid in geam_info:
+            geam_info.pop(cid)
+        userStep[cid]=0
+        markup=InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("ساخت بازی جدید",callback_data="creat_geam"))
+        markup.add(InlineKeyboardButton("لیست بازی های ذخیره شده",callback_data="list"))
+        markup.add(InlineKeyboardButton("افزودن ادمین",callback_data="sobjoin"))
+        bot.send_message(cid,"""
+سلام ادمین گرامی به ربات خوش آمدید 
+لطفا برای استفاده از ربات از دکمه های زیر استفاده کنید
+""",reply_markup=markup)
+    elif cid in admin:
+        try:
+            database.insert_users(int(cid),"ادمین")
+        except:
+            pass
+        if cid in geam_info:
+            geam_info.pop(cid)
+        userStep[cid]=0
+        markup=InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("ساخت بازی جدید",callback_data="creat_geam"))
+        markup.add(InlineKeyboardButton("لیست بازی های ذخیره شده",callback_data="list"))
+
+        bot.send_message(cid,"""
+سلام ادمین گرامی به ربات خوش آمدید 
+لطفا برای استفاده از ربات از دکمه های زیر استفاده کنید
+""",reply_markup=markup)
     else:
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(KeyboardButton("محصولات"))
-        markup.add(KeyboardButton(" سبد خرید 🛒"), KeyboardButton(" حساب کاربری 👤"))
-        markup.add(KeyboardButton("ارتباط با ما 📞"), KeyboardButton("سوابق خرید📝"))
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid, "سلام به فروشگاه فورس خوش آمدید")
-        bot.send_message(
-            cid, "برای استفاده از ربات از گزینه های زیر استفاده کنید", reply_markup=markup)
-
-
-
-@bot.message_handler(func=lambda m: m.text == "منوی اصلی")
-def command_start(m):
+        list_user_login=database.use_users()
+        list_cid_user=[]
+        for i in list_user_login:
+            list_cid_user.append(i[0])
+        if cid not in list_cid_user:
+            markup=InlineKeyboardMarkup()
+            markup.add(InlineKeyboardButton("ثبت نام",callback_data="login"))
+            bot.send_message(cid,"لطفا برای بازی و استفاده از ربات ثبت نام کنید",reply_markup=markup)
+        else:
+            bot.send_message(cid,"ثبت نام شما انجام شده و میتوانید در بازی ها شرکت کنید")
+        
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==1)
+def creat_geam_1(m):
     cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(KeyboardButton("محصولات"))
-    markup.add(KeyboardButton(" سبد خرید 🛒"), KeyboardButton(" حساب کاربری 👤"))
-    markup.add(KeyboardButton("ارتباط با ما 📞"), KeyboardButton("سوابق خرید📝"))
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")
-    bot.send_message(
-        cid, "جهت خرید یکی از گزینه های زیر را انتخاب کنید", reply_markup=markup)
-    userStep.setdefault(cid,0)
-    userStep[cid]=0
-
-
-@bot.message_handler(func=lambda m: m.text=="ویرایش نام📝")
-def name_custom_keyboard(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    bot.send_message(cid,"نام خود را وارد کنید:")
-    userStep[cid]=1
-
-
-@bot.message_handler(func=lambda m: m.text=="وارد کردن ایمیل📧")
-def phone_custom_keyboard(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    bot.send_message(cid,"ایمیل خود را وارد کنید:")
+    text=m.text
+    geam_info.setdefault(cid,{})
+    geam_info[cid].setdefault('name',text)
+    bot.send_message(cid,"لینک توضیحات سناریو بازی را ارسال کنید:")
     userStep[cid]=2
 
 
-@bot.message_handler(func=lambda m: m.text=="وارد کردن آدرس🏘")
-def phone_custom_keyboard(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    bot.send_message(cid,"آدرس خود را وارد کنید:")
-    userStep[cid]=3
-
-
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==1)
-def name_custom(m):
-    cid = m.chat.id
-    name=m.text
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    database.update_customer_table(cid,"name",m.text)
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("نمایش اطلاعات📝")
-    markup.add("ویرایش نام📝")
-    markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-    markup.add("وارد کردن ایمیل📧")
-    markup.add("وارد کردن آدرس🏘")
-    markup.add("منوی اصلی")
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"نام شما ذخیره شد✅",reply_markup=markup)
-    userStep[cid]=0
-
-
 @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==2)
-def phone_custom(m):
+def creat_geam_2(m):
     cid = m.chat.id
-    phone=m.text
-    unblock(cid)
-    checking(cid)
-    if cid in block:
+    text=m.text
+    geam_info.setdefault(cid,{})
+    geam_info[cid].setdefault('link_info',text)
+    bot.send_message(cid,"لطفا برای بازی یک بنر ارسال کنید(عکس)")
+    userStep[cid]=3
+# @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==4)
+# def creat_geam_2(m):
+#     cid = m.chat.id
+#     text=m.text
+#     geam_info.setdefault(cid,{})
+#     geam_info[cid].setdefault('link_info',text)
+#     bot.send_message(cid,"لطفا تعداد نفرات شرکت کننده در بازی را مشخص کنید ",reply_markup=gen_number_markup(1))
+
+# @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==3)
+# def creat_geam_3(m):
+#     cid = m.chat.id
+#     text=m.text
+#     bot.send_message(cid,"لطفا آی دی ناظر را ارسال کنید:(مثال:@nazer)")
+#     userStep[cid]=4
+
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==4)
+def creat_geam_4(m):
+    cid = m.chat.id
+    text=m.text
+    geam_info.setdefault(cid,{})
+    geam_info[cid].setdefault('nazer',text)
+    bot.send_message(cid,"لطفا اسم ناظر را وارد کنید:")
+    userStep[cid]=7
+
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==7)
+def creat_geam_4(m):
+    cid = m.chat.id
+    text=m.text
+    geam_info.setdefault(cid,{})
+    geam_info[cid].setdefault('name_nazer',text)
+    dict_weak=terikh.dict_time_now()
+    markup=InlineKeyboardMarkup()
+    for i in dict_weak:
+        markup.add(InlineKeyboardButton(f"{i} {dict_weak[i]}",callback_data=f"date_{i}_{dict_weak[i]}"))
+    # markup.add(InlineKeyboardButton("به محض تکمیل لیست",callback_data="complete_list"))
+    bot.send_message(cid,"لطفا زمان شروع بازی را مشخص کنید ",reply_markup=markup)
+    # userStep[cid]=5
+
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==5)
+def creat_geam_3(m):
+    cid = m.chat.id
+    if get_user_step(cid)==5:
+        try:
+            text=m.text
+            timmme=jdatetime.datetime.now().replace(day=int(temporary_time[cid].split("/")[2]), month=int(temporary_time[cid].split("/")[1]), hour=int(text.split(":")[0]), minute=int(text.split(":")[1]), second=0)
+            geam_info.setdefault(cid,{})
+            geam_info[cid].setdefault("time",f"{text} {temporary_time[cid]}")
+            print(timmme)
+            print(f"{text} {temporary_time[cid]}")
+            temporary_time.pop(cid)
+        except:
+            bot.send_message(cid,"فرمت زمان ارسال شده نا معتبر است لطفا زمان را به درستی وارد کنید")
+            return
+
+    markup=InlineKeyboardMarkup()
+    list_dict_grups=database.use_table_admin_group()
+    print(list_dict_grups)
+    grup_ok=False
+    if len(list_dict_grups)>0:
+        for i in list_dict_grups:
+            if is_bot_admin(i[0]):
+                markup.add(InlineKeyboardButton(i[1],callback_data=f"select_{i[0]}_{i[1]}"))
+                grup_ok=True
+    else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"ربات شما در گروهی عضو نیست لطفا برای ارسال بازی در گروه ربات را در آن گروه اد کنید و ادمین کنید.\nسپس دکمه سرچ را بزنید.\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+        userStep[cid]=0
         return
-    database.update_customer_table(cid,"email",m.text)
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("نمایش اطلاعات📝")
-    markup.add("ویرایش نام📝")
-    markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-    markup.add("وارد کردن ایمیل📧")
-    markup.add("وارد کردن آدرس🏘")
-    markup.add("منوی اصلی")
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"ایمیل شما ذخیره شد✅",reply_markup=markup)
+    if grup_ok:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"لطفا گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید:\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+    else:
+        markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+        markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+        bot.send_message(cid,"لطفا ربات را در گروه هایی که میخواهید بازی را ارسال کنید ادمین کنید.\nسپس دکمه سرچ را بزنید\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
     userStep[cid]=0
 
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==3)
-def name_custom(m):
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==11)
+def creat_geam_1(m):
     cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    database.update_customer_table(cid,"address",m.text)
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("نمایش اطلاعات📝")
-    markup.add("ویرایش نام📝")
-    markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-    markup.add("وارد کردن ایمیل📧")
-    markup.add("وارد کردن آدرس🏘")
-    markup.add("منوی اصلی")
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"آدرس شما ذخیره شد✅",reply_markup=markup)
+    text=m.text
+    geam_info[cid]["name"]=text
+    markup=InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+    markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+    markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+    markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+    markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+    markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+    markup.add(InlineKeyboardButton("اضافه کردن بازی به حافظه",callback_data="adding"))
+    markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+    bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
     userStep[cid]=0
 
- 
-
-@bot.message_handler(content_types=["contact"])
-def address_custom(m):
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==12)
+def creat_geam_1(m):
     cid = m.chat.id
-    phone=m.contact.phone_number
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    database.update_customer_table(cid,"phone",phone)
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("نمایش اطلاعات📝")
-    markup.add("ویرایش نام📝")
-    markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-    markup.add("وارد کردن ایمیل📧")
-    markup.add("وارد کردن آدرس🏘")
-    markup.add("منوی اصلی")
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")
-    bot.send_message(cid,"شماره تلفن شما ذخیره شد✅",reply_markup=markup)
+    text=m.text
+    geam_info[cid]["link_info"]=text
+    markup=InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+    markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+    markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+    markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+    markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+    markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+    markup.add(InlineKeyboardButton("اضافه کردن بازی به حافظه",callback_data="adding"))
+    markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+    bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
     userStep[cid]=0
 
-
-
-
-@bot.message_handler(func=lambda m: m.text == "نمایش اطلاعات📝")
-def command_start(m):
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==14)
+def creat_geam_1(m):
     cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    dict_info=database.use_customer_table_where(f"cid={cid}")
-    name=dict_info["name"]
-    if name==None:
-        name="❌"
-    add=dict_info["address"]
-    if add==None:
-        add="❌"
-    email=dict_info["email"]
-    if email==None:
-        email="❌"
-    phone=dict_info["phone"]
-    if phone==None:
-        phone="❌"
-    markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("ویرایش نام📝")
-    markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-    markup.add("وارد کردن ایمیل📧")
-    markup.add("وارد کردن آدرس🏘")
-    markup.add("منوی اصلی") 
-    if cid==admin:
-        markup.add("برگشت به منو ادمین")   
-    bot.send_message(cid,f"""
-اطلاعات شما📝
-
-* نام : {name}
-
-* شماره تلفن : {phone}
-
-ایمیل : {email}
-
-* آدرس : {add}
-""",reply_markup=markup)
-
-
-
-@bot.message_handler(func=lambda m: m.text == "محصولات")
-def product(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    set_code=set()
-    list_product=database.use_product_table()
-    for i in list_product:
-        set_code.add(i["code"])
-    if 0 in set_code:
-        set_code.remove(0)
-    for i in set_code:
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(
-            "انتخاب سایز", callback_data=f"size_{i}"))
-        mid = bot.copy_message(cid, ch_id, i,
-                               reply_markup=markup)
-        products.setdefault(cid,{})
-        products[cid].setdefault(i, {})
-        products[cid][i]["mid"] = mid.message_id
-    markup2 = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup2.add(KeyboardButton("منوی اصلی "), KeyboardButton(" سبد خرید 🛒"))
-    if cid==admin:
-        markup2.add("برگشت به منو ادمین")
-    bot.send_message(
-        cid, "برای دسترسی به سبد خرید یا منوی اصلی از گزینه های پایین استفاده کنید.", reply_markup=markup2)
-
-
-@bot.message_handler(func=lambda m: m.text == "سبد خرید 🛒")
-def cart(m):
-    global sssss
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    list_shoppingcart=database.use_shopping_cart_table_where(f"cid={cid}")
-    if len(list_shoppingcart) == 0:
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(KeyboardButton("منوی اصلی "))
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid, "سبد خرید شما خالی است", reply_markup=markup)
-        return
-    price_total=0
-    update=False
-    for b in list_shoppingcart:
-        list_price=database.use_product_table_where(f"product_id={b['product_id']}")
-        for i in list_price:
-            if b["qty"]>i["qty_stock"]:
-                update=True
-                if i["qty_stock"]==0:
-                    if i["code"]==0:
-                        markup=InlineKeyboardMarkup()
-                        markup.add(InlineKeyboardButton("❌",callback_data="mesdelete"))  
-                        bot.send_message(cid,f"""
-اسم محصول:{i['name']}
-برند:{i['brand']}
-سایز:{i['size']}
-تعداد:{b['qty']}
-شما این محصول را در سبد خرید خود ذخیره کرده بودید اما متاسقانه این محصول از فروشگاه حذف شده
-""",reply_markup=markup)     
-                        product_id_j=database.use_product_table_where(f"code={i['code']} and size={i['size']}")[0]["product_id"]
-                        database.delete_shopping_cart_table(cid,product_id_j)
-                    else:
-                        markup=InlineKeyboardMarkup()
-                        markup.add(InlineKeyboardButton("❌",callback_data="mesdelete"))
-                        bot.copy_message(cid,ch_id, i["code"], reply_markup=markup,caption="""متاسفانه در حال حاضر این محصول در انبار وجود ندارد و از سبد خرید شما حذف شد""")
-                        product_id_j=database.use_product_table_where(f"code={i['code']} and size={i['size']}")[0]["product_id"]
-                        database.delete_shopping_cart_table(cid,product_id_j)
-                else:
-                    bot.copy_message(cid,ch_id, i["code"], reply_markup=gen_cart_markup(str(i["code"]), str(i["size"]), i["qty_stock"]),caption=f"""
-از این محصول با سایز : {i["size"]}
-شما تعداد {b["qty"]} از این محصول را در سبد خرید خود ذخیره کرده بودید اما در حال حاضر فقط {i["qty_stock"]} عدد از این محصول در انبار وجود دارد
-""")
-                    price_total+=i["price"]*i["qty_stock"]
-                    database.update_shopping_cart_table(cid,b['product_id'],int(i["qty_stock"]))
-            else:    
-                bot.copy_message(cid,ch_id, i["code"], reply_markup=gen_cart_markup(str(i["code"]), str(i["size"]), b["qty"]),caption=f"""تعداد :'{b["qty"]}' با سایز '{i["size"]}' از این محصول. قیمت:{i['price']*b["qty"]}""")
-                price_total+=i["price"]*b["qty"]
-
-
-    markup2 = InlineKeyboardMarkup()
-    if update:
-        markup2.add(InlineKeyboardButton("آپدیت سبد خرید",callback_data="restart_cart"))
-    if price_total!=0:
-        markup2.add(InlineKeyboardButton("خرید و ثبت نهایی", callback_data="shop_cart"))
-    ee = bot.send_message(cid, f"قیمت کل سبد خرید شما برابر است با :{price_total}", reply_markup=markup2)
-    sssss = int(ee.message_id)
-    markup3 = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup3.add(KeyboardButton("منوی اصلی "))
-    if cid==admin:
-        markup3.add("برگشت به منو ادمین")
-    bot.send_message(
-        cid, 'برای بازگشت به منو اصلی از گزینه پایین استفاده کنید', reply_markup=markup3)
-
-
-@bot.message_handler(func=lambda m: m.text == "ارتباط با ما 📞")
-def contact_us(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    bot.copy_message(cid,ch_id, 8)
-
-@bot.message_handler(func=lambda m: m.text == "سوابق خرید📝")
-def records(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
-        return
-    conf=True
-    text=""
-    if cid in shopping_cart_stop:
-        list_awaiting_confirm=shopping_cart_stop[cid]
-        if len(list_awaiting_confirm)>0:
-            conf=False
-            text+="محصولات در انتظار تایید رسید\n"
-            for i in list_awaiting_confirm:
-                text+=f"سفارش {i}\n"
-                price_total=0
-                for b in shopping_cart_stop[cid][i]:
-                    dict_pro=database.use_product_table_where(f"product_id={b['product_id']}")[0]
-                    price_total+=b['qty']*dict_pro["price"]
-                    text+=f"""
-       >اسم محصول : {dict_pro["name"]}
-       >برند : {dict_pro["brand"]}
-       >فی : {dict_pro["price"]}
-       >تعداد : {b['qty']}
-       >قیمت : {b['qty']*dict_pro["price"]}
-    ***********************
-    """
-                text+=f"""
-    قیمت کل سفارش {i} : {price_total}
-    ###########################
-
-    """
-            markup = ReplyKeyboardMarkup(resize_keyboard=True)
-            markup.add(KeyboardButton("منوی اصلی "))
-            if cid==admin:
-                markup.add("برگشت به منو ادمین")
-            bot.send_message(cid,text,reply_markup=markup)
-    text=""
-    list_time_sales_row=database.use_sales_table(cid)
-    if len(list_time_sales_row)!=0:
-        conf=False
-        text+="محصولات خریداری شده\n"
-        for i in list_time_sales_row:
-            text+=f"سفارش {i['inv_id']}\n"
-            list_sales_row=database.use_sales_row_table(i["inv_id"])
-            price_total=0
-            for b in list_sales_row:
-                dict_pro=database.use_product_table_where(f"product_id={b['product_id']}")[0]
-                price_total+=b['qty']*dict_pro["price"]
-                text+=f"""
-   >اسم محصول : {dict_pro["name"]}
-   >برند : {dict_pro["brand"]}
-   >فی : {dict_pro["price"]}
-   >تعداد : {b['qty']}
-   >قیمت : {b['qty']*dict_pro["price"]}
-* * * * * * * * * * * *
-
-"""
-            text+=f"""
-قیمت کل سفارش {i["inv_id"]} : {price_total}
-############################
-
-"""
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(KeyboardButton("منوی اصلی "))
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,text,reply_markup=markup)
-    if conf:
-        markup = ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(KeyboardButton("منوی اصلی "))
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,"شما هنوز سفارشی ثبت نکرده اید",reply_markup=markup)
-    
-
-
-
-    
-
-@bot.message_handler(func=lambda m: m.text == "حساب کاربری 👤")
-def contact_us(m):
-    cid = m.chat.id
-    unblock(cid)
-    checking(cid)
-    if cid in block:
+    try:
+        text=m.text
+        timmme=jdatetime.datetime.now().replace(day=int(temporary_time[cid].split("/")[2]), month=int(temporary_time[cid].split("/")[1]), hour=int(text.split(":")[0]), minute=int(text.split(":")[1]), second=0)
+        geam_info.setdefault(cid,{})
+        geam_info[cid]["time"]=f"{text} {temporary_time[cid]}"
+        print(timmme)
+        print(f"{text} {temporary_time[cid]}")
+        temporary_time.pop(cid)
+    except:
+        bot.send_message(cid,"فرمت زمان ارسال شده نا معتبر است لطفا زمان را به درستی وارد کنید")
         return
     markup=InlineKeyboardMarkup()
-    if database.use_customer_table_where(f"cid={cid}")==None:
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("ویرایش نام📝")
-        markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-        markup.add("وارد کردن ایمیل📧")
-        markup.add("وارد کردن آدرس🏘")
-        markup.add("منوی اصلی")
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,f"""
-اطلاعات شما📝
+    markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+    markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+    markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+    markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+    markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+    markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+    markup.add(InlineKeyboardButton("اضافه کردن بازی به حافظه",callback_data="adding"))
+    markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+    bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
+    userStep[cid]=0
 
-* نام : {m.from_user.first_name}
-
-* شماره تلفن : ❌
-
-ایمیل : ❌
-
-* آدرس : ❌
-""",reply_markup=markup)
-        bot.send_message(cid,"برای خرید لطفا فیلد های ستاره دار را پر کنید")
-        database.create_one_customer(cid,"name",f"{m.from_user.first_name}")
-        
-    else:
-        dict_info=database.use_customer_table_where(f"cid={cid}")
-        name=dict_info["name"]
-        if name==None:
-            name="❌"
-        add=dict_info["address"]
-        if add==None:
-            add="❌"
-        email=dict_info["email"]
-        if email==None:
-            email="❌"
-        phone=dict_info["phone"]
-        if phone==None:
-            phone="❌"
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("ویرایش نام📝")
-        markup.add(KeyboardButton("وارد کردن شماره تلفن📞",request_contact=True))
-        markup.add("وارد کردن ایمیل📧")
-        markup.add("وارد کردن آدرس🏘")
-        markup.add("منوی اصلی")
-        if cid==admin:
-            markup.add("برگشت به منو ادمین")
-        bot.send_message(cid,f"""
-اطلاعات شما📝
-
-* نام : {name}
-
-* شماره تلفن : {phone}
-
-ایمیل : {email}
-
-* آدرس : {add}
-""",reply_markup=markup)
-
-
-
-@bot.message_handler(func=lambda m: True)
-def product(m):
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==16)
+def creat_geam_1(m):
     cid = m.chat.id
-    bot.send_message(cid, "مقدار وارد شده نامعتبر است ")
+    text=m.text.split(" ")
+    geam_info[cid]["nazer"]=text[0]
+    geam_info[cid]["name_nazer"]=text[1]
+    markup=InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("تغیر سناریو",callback_data="change_scenario"))
+    markup.add(InlineKeyboardButton("تغییر لینک توضیح سناریو",callback_data="change_link"))
+    markup.add(InlineKeyboardButton("تغییر تعداد شرکت کندگان",callback_data="change_number"))
+    markup.add(InlineKeyboardButton("تغییر ساعت ",callback_data="change_time"))
+    markup.add(InlineKeyboardButton("تغییر گروه",callback_data="change_group"))
+    markup.add(InlineKeyboardButton('تغییر ناظر',callback_data="change_nazer"))
+    markup.add(InlineKeyboardButton("تایید و ارسال",callback_data="confirm"))
+    bot.send_photo(cid,geam_info[cid]["photo"],f"""
+📜سناریو:  <a href='{geam_info[cid]["link_info"]}'>{geam_info[cid]["name"]}</a>
+🕰ساعت شروع:{geam_info[cid]["time"]}
+👥نام گروه :{geam_info[cid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{geam_info[cid]["nazer"].replace("@","")}'>{geam_info[cid]["name_nazer"]}</a>
+""",parse_mode='HTML',reply_markup=markup)
+    userStep[cid]=0
+
+
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==20)
+def loging_cid(m):
+    cid=m.chat.id
+    text=m.text
+    list_user_name=[]
+    list_cid=[]
+    list_all=database.use_users()
+    for i in list_all:
+        list_cid.append(i[0])
+        list_user_name.append(i[1])
+    if cid not in list_cid:
+        if text not in list_user_name:
+            database.insert_users(int(cid),text)
+            bot.send_message(cid,"ثبت نام شما با موفقیت انجام شد شما حالا میتوانید در بازی ها شرکت کنید")
+            userStep[cid]=0
+        else:
+            bot.send_message(cid,"این نام کاربری قبلا انتخاب شده است لطفا نام کاربری دیگری را وارد کنید:")
+    else:
+        bot.send_message(cid,"شما قبلا ثبت نام کرده اید")
+
+    # try:
+    #     database.insert_users(int(cid),text)
+    #     bot.send_message(cid,"ثبت نام شما با موفقیت انجام شد شما حالا میتوانید در بازی ها شرکت کنید")
+    # except:
+    #     bot.send_message(cid,"شما قبلا ثبت نام کرده اید")
+
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==200)
+def creat_geam_1(m):
+    cid = m.chat.id
+    text=m.text
+    if m.forward_origin != None:
+        if m.forward_origin.type=="channel":
+            database.insert_group(m.forward_origin.chat.id,m.forward_origin.chat.title)
+            markup=InlineKeyboardMarkup()
+            list_dict_grups=database.use_table_admin_group()
+            
+            if len(list_dict_grups)>0:
+                grup_ok=False
+                for i in list_dict_grups:
+                    if is_bot_admin(i[0]):
+                        markup.add(InlineKeyboardButton(i[1],callback_data=f"select_{i[0]}_{i[1]}"))
+                        grup_ok=True
+                if grup_ok:
+                    markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+                    markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+                    bot.send_message(cid,"لطفا گروهی که میخواهید بازی در آن ارسال شود را انتخاب کنید:\n\nو در صورتی که قصد دارید کانالی را اضافه کنید از دکمه 'افزودن کانال' استفاده کنید",reply_markup=markup)
+                else:
+                    markup.add(InlineKeyboardButton("افزودن کانال",callback_data="chanel"))
+                    markup.add(InlineKeyboardButton("سرچ",callback_data="again"))
+                    bot.send_message(cid,"لطفا ربات را در کانال ها و گروه هایی که میخواید بازی را ارسال کنید ادمین کنید",reply_markup=markup)
+        else:
+            bot.send_message(cid,"لطفا پیامی را که فوروارد میکنید فقط از یک کانال باشد")
+    else:
+        bot.send_message(cid,"لطفا پیام را از کانالی فوروارد کنید")
+    
+@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==300)
+def add_new_admin(m):
+    cid = m.chat.id
+    text=m.text
+    try:
+        list_cid_user=database.use_users_user_name(text)
+        print(list_cid_user)
+        admin.append(int(list_cid_user[0][0]))
+        bot.send_message(cid,f"کاربر '{list_cid_user[0][1]}' به ادمین ارتقا یافت")
+        bot.send_message(int(list_cid_user[0][0]),"درجه شما به ادمین ارتقا یافت")
+        userStep[cid]=0
+    except:
+        bot.send_message(cid,"شخصی با این نام کاربری هنوز در ربات ثبت نام نکرده است.")
+
+def check_and_notify_thread():
+    while True:
+        if len(game_info_in_group)>0:
+            for gid in game_info_in_group:
+                try:
+                    print(game_info_in_group)
+                    print(game_info_in_group[gid])
+                    time_send=jdatetime.datetime.strptime(game_info_in_group[gid]["time"], "%H:%M %Y/%m/%d")-datetime.timedelta(minutes=15)
+                    print(time_send)
+                    ir_tz = pytz.timezone('Asia/Tehran')
+                    if jdatetime.datetime.strftime(time_send,"%H:%M %Y/%m/%d")==jdatetime.datetime.strftime(jdatetime.datetime.now(ir_tz),"%H:%M %Y/%m/%d"):
+                        if len(mid_game_in_group[gid])>0:
+                            for number in mid_game_in_group[gid]:
+                                try:
+                                    bot.send_message(int(mid_game_in_group[gid][number][0]),"بازیکن گرامی برای ثبت حضور خود در بازی وارد گروه شوید و حضور خود را ثبت کنید")
+                                except:
+                                    print("nashod",mid_game_in_group[gid][number][0])
+                        else:
+                            print("ajib",mid_game_in_group)
+                            pass
+                except:
+                    pass
+            for gid in game_info_in_group:
+                try:
+                    time_send=jdatetime.datetime.strptime(game_info_in_group[gid]["time"], "%H:%M %Y/%m/%d")-datetime.timedelta(minutes=10)
+                    print(time_send)
+                    ir_tz = pytz.timezone('Asia/Tehran')
+                    if jdatetime.datetime.strftime(time_send,"%H:%M %Y/%m/%d")==jdatetime.datetime.strftime(jdatetime.datetime.now(ir_tz),"%H:%M %Y/%m/%d"):
+                        if len(mid_game_in_group[gid])>0:
+                            update=False
+                            for number in mid_game_in_group[gid]:
+                                try:
+                                    if int(mid_game_in_group[gid][number][0]) not in present_dict[gid]:
+                                        mid_game_in_group[gid].pop(number)
+                                        mid=mid_game_in_group[gid][number][2]
+                                        update=True 
+                                except:
+                                    print("nashod",mid_game_in_group[gid][number][0])
+                            if update:
+                                text=""
+                                total_number_reserv=[]
+                                for i in mid_game_in_group[gid]:
+                                    total_number_reserv.append(i)
+                                    name=mid_game_in_group[gid][i][1]
+                                    text+=str(i)+"."+str(name)+"\n"
+                                markup=InlineKeyboardMarkup()
+                                markup_button=[]
+                                for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                                    if i in total_number_reserv:
+                                        markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_ok"))
+                                    else:
+                                        markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+                                markup.add(*markup_button)
+                                markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+                                markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario {gid} {mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer {gid} {mid}"))
+                                markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
+                                bot.edit_message_caption(
+f"""
+📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+👤کسانی که جوین شدند:
+~~~~~~~~~~~~~~~~~~
+{text}
+~~~~~~~~~~~~~~~~~~
+""",gid,mid,parse_mode="HTML",reply_markup=markup
+            )
+
+                        else:
+                            print("ajib",mid_game_in_group)
+                            pass
+                except:
+                    pass
+        else:
+            pass
+
+
+        threading.Event().wait(56)
+
+
+
+
+
+
+check_thread = threading.Thread(target=check_and_notify_thread)
+check_thread.start()
 
 
 bot.infinity_polling()
