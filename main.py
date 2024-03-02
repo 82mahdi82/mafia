@@ -83,7 +83,6 @@ bot.set_update_listener(listener)
 
 @bot.message_handler(func=lambda m: m.text=="کنسل")
 def cancel_admin(m):
-    # bot.send_message(m.chat.id,"روند ساخت بازی کنسل شد")
     command_start(m)
 
 @bot.message_handler(content_types=["photo"])
@@ -432,6 +431,13 @@ f"""
             for i in mid_game_in_group[gid]:
                 all_cid_reserv.append(mid_game_in_group[gid][i][0])
         if cid not in all_cid_reserv:
+            time_send=jdatetime.datetime.strptime(game_info_in_group[gid]["time"], "%H:%M %Y/%m/%d")-datetime.timedelta(minutes=15)
+            print(time_send)
+            ir_tz = pytz.timezone('Asia/Tehran')
+            time2 = datetime.datetime.strftime(datetime.datetime.now(ir_tz),"%H:%M %Y/%m/%d")
+            time3=datetime.datetime.strptime(time2,"%H:%M %Y/%m/%d")
+            if time_send<=time3:
+                present_dict[gid].append(cid)
             mid_game_in_group[gid].setdefault(int(data),[cid,list_cid_user[cid],mid])
             text=""
             for i in mid_game_in_group[gid]:
@@ -478,7 +484,7 @@ f"""
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("login"))
-def select_chanel(call):
+def select_user_name_for(call):
     cid = call.message.chat.id
     bot.send_message(cid,"لطفا نام کاربری خود را وارد کنید:")
     userStep[cid]=20
@@ -734,6 +740,13 @@ def call_callback_data_number(call):
     bot.answer_callback_query(call.id,"ادمین حذف شد")
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("logchang"))
+def change_user_name(call):
+    cid = call.message.chat.id
+    mid = call.message.message_id
+    database.delete_user(cid)
+    select_user_name_for(call.message)
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("lisobjoin"))
 def call_callback_data_number(call):
@@ -824,21 +837,19 @@ def command_start(m):
             markup.add(InlineKeyboardButton("لیست بازی های ذخیره شده",callback_data="list"))
             markup.add(InlineKeyboardButton("افزودن ادمین",callback_data="sobjoin"))
             markup.add(InlineKeyboardButton("لیست ادمین ها",callback_data="lisobjoin"))
+            markup.add(InlineKeyboardButton("ثبت نام به عنوان بازی کن",callback_data="login"))
             bot.send_message(cid,"""
-    سلام ادمین گرامی به ربات خوش آمدید 
+    سلام مدیر گرامی به ربات خوش آمدید 
     لطفا برای استفاده از ربات از دکمه های زیر استفاده کنید
     """,reply_markup=markup)
         elif cid in admin:
-            try:
-                database.insert_users(int(cid),"ادمین")
-            except:
-                pass
             if cid in geam_info:
                 geam_info.pop(cid)
             userStep[cid]=0
             markup=InlineKeyboardMarkup()
             markup.add(InlineKeyboardButton("ساخت بازی جدید",callback_data="creat_geam"))
             markup.add(InlineKeyboardButton("لیست بازی های ذخیره شده",callback_data="list"))
+            markup.add(InlineKeyboardButton("ثبت نام به عنوان بازی کن",callback_data="login"))
 
             bot.send_message(cid,"""
     سلام ادمین گرامی به ربات خوش آمدید 
@@ -854,6 +865,8 @@ def command_start(m):
                 markup.add(InlineKeyboardButton("ثبت نام",callback_data="login"))
                 bot.send_message(cid,"لطفا برای بازی و استفاده از ربات ثبت نام کنید",reply_markup=markup)
             else:
+                markup=InlineKeyboardMarkup()
+                markup.add(InlineKeyboardButton("تغییر نام کاربری",callback_data="logchang"))
                 bot.send_message(cid,"ثبت نام شما انجام شده و میتوانید در بازی ها شرکت کنید")
 
 @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==1)

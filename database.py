@@ -52,6 +52,7 @@ def use_games(cid):
     return dict_info
 
 
+
 def delete_games(name,link_game,cid):
     connect = sqlite3.connect("data.db")
     cur = connect.cursor()
@@ -59,6 +60,12 @@ def delete_games(name,link_game,cid):
     connect.commit()
     connect.close()
 
+def delete_user(cid):
+    connect = sqlite3.connect("data.db")
+    cur = connect.cursor()
+    cur.execute(f"delete from games where cid={cid}")
+    connect.commit()
+    connect.close()
 
 
 def use_users():
