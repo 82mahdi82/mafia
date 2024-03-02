@@ -63,7 +63,7 @@ def delete_games(name,link_game,cid):
 def delete_user(cid):
     connect = sqlite3.connect("data.db")
     cur = connect.cursor()
-    cur.execute(f"delete from games where cid={cid}")
+    cur.execute(f"delete from users where cid={cid}")
     connect.commit()
     connect.close()
 
@@ -104,3 +104,5 @@ def use_users_user_name(user_name):
 #     return dict_info
 
 # insert_games("شب س هم","http:\\efkmlksvmkvf.com","gfjxrlitkhndgnmhd,m xfl.bmnskz;mb c,slk;m c,mn xvm nb",6)
+
+# print(use_users_admin(6926746273))
