@@ -321,7 +321,7 @@ def select_chanel(call):
                 # new_group = bot.create_chat(title=group_name, type='supergroup')
                 # bot.create_chat_invite_link(cid,"mahdi")
                 for i in mid_game_in_group[gid]:
-                    bot.send_message(mid_game_in_group[gid][i][0],f"لینک ورود به بازی برای شروع بازی روی لینک زیر بزنید \n{game_info_in_group[gid]["link_srart_game"]}")
+                    bot.send_message(mid_game_in_group[gid][i][0],f"لینک ورود به بازی برای شروع بازی روی لینک زیر بزنید \n{game_info_in_group[gid]['link_srart_game']}")
 
                 
                 total_number_reserv=[] 
