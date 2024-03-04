@@ -1345,12 +1345,9 @@ def check_and_notify_thread():
                                     markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
                             markup.add(*markup_button)
                             markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
-<<<<<<< HEAD
                             # markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario_{gid}_{game_info_in_group[gid]["mid"]}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer_{gid}_{game_info_in_group[gid]["mid"]}"))
                             markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_senario_{gid}_{game_info_in_group[gid]['mid']}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_nazer_{gid}_{game_info_in_group[gid]['mid']}"))
-=======
                             markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario_{gid}_{game_info_in_group[gid]['mid']}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer_{gid}_{game_info_in_group[gid]['mid']}"))
->>>>>>> 77e96f11a2f7342b391e6fa7fa92cb04b3761f98
                             markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}"))
                             markup.add(InlineKeyboardButton("❌حذف بازیکن",callback_data="deluser"))
                             bot.edit_message_caption(
