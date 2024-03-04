@@ -79,6 +79,16 @@ def cancel_admin(m):
 
 
 
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("cagame"))
+def stgame_def(call):
+    cid = call.message.chat.id
+    mid=call.message.message_id
+    start_game.pop(cid)
+    bot.send_message(cid,"عملیات با موفقیت لغو شد")
+    cancel_admin(call.message)
+
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("stgame"))
 def stgame_def(call):
     cid = call.message.chat.id
@@ -344,11 +354,11 @@ def select_chanel(call):
                 )
                 bot.answer_callback_query(call.id,"انصراف شما انجام شد")
             else:
-                bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
+                bot.answer_callback_query(call.id,"شما در بازی رزرو نیستید")
         else:
-            bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
+            bot.answer_callback_query(call.id,"شما در بازی رزرو نیستید")
     else:
-        bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
+        bot.answer_callback_query(call.id,"شما در بازی رزرو نیستید")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("admin"))
 def select_chanel(call):
@@ -1372,7 +1382,7 @@ def start_game_def3(m):
     start_game[cid].setdefault("room_pass",text)
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("تایید و شروع بازی",callback_data="stgame"))
-    markup.add(InlineKeyboardButton("مقدار دهی مجدد",callback_data=f"admin_start_{start_game[cid]['gid']}_{start_game[cid]['mid']}"))
+    markup.add(InlineKeyboardButton("لغو",callback_data="cagame"))
     bot.send_message(cid,f"""
 لینک مستقیم ورود به اتاق : {start_game[cid]["url"]}
 شماره اتاق : {start_game[cid]["room_num"]}
