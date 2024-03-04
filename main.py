@@ -301,47 +301,50 @@ def select_chanel(call):
     cid=call.from_user.id
     mid=call.message.message_id
     all_cid_reserv={}
-    if len(mid_game_in_group[gid])>0:
-        for i in mid_game_in_group[gid]:
-            all_cid_reserv.setdefault(mid_game_in_group[gid][i][0],i)
-        if cid in all_cid_reserv:
-            total_number_reserv=[] 
-            all_cid_reserv=all_cid_reserv.pop(cid)
-            mid_game_in_group[gid].pop(int(all_cid_reserv))
-            text=""
+    if gid in mid_game_in_group:
+        if len(mid_game_in_group[gid])>0:
             for i in mid_game_in_group[gid]:
-                total_number_reserv.append(i)
-                name=mid_game_in_group[gid][i][1]
-                if mid_game_in_group[gid][i][0] in present_dict[gid]:
-                    text+=str(i)+"."+str(name)+"(حاضر)"+"\n"
-                else:
-                    text+=str(i)+"."+str(name)+"\n"
-            markup=InlineKeyboardMarkup()
-            markup_button=[]
-            for i in range(1,int(game_info_in_group[gid]["number"])+1):
-                if i in total_number_reserv:
-                    markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_{i}_ok"))
-                else:
-                    markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
-            markup.add(*markup_button)
-            markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
-            markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_senario_{gid}_{mid}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_nazer_{gid}_{mid}"))
-            # markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario_{gid}_{mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer_{gid}_{mid}"))
-            markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}_{mid}"))
-            markup.add(InlineKeyboardButton("❌حذف بازیکن",callback_data="deluser"))
-            bot.edit_message_caption(
-f"""
-📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
-🕰ساعت شروع:{game_info_in_group[gid]["time"]}
-👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
-🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
-👤کسانی که جوین شدند:
-~~~~~~~~~~~~~~~~~~
-{text}
-~~~~~~~~~~~~~~~~~~
-""",gid,mid,reply_markup=markup,parse_mode="HTML"
-            )
-            bot.answer_callback_query(call.id,"انصراف شما انجام شد")
+                all_cid_reserv.setdefault(mid_game_in_group[gid][i][0],i)
+            if cid in all_cid_reserv:
+                total_number_reserv=[] 
+                all_cid_reserv=all_cid_reserv.pop(cid)
+                mid_game_in_group[gid].pop(int(all_cid_reserv))
+                text=""
+                for i in mid_game_in_group[gid]:
+                    total_number_reserv.append(i)
+                    name=mid_game_in_group[gid][i][1]
+                    if mid_game_in_group[gid][i][0] in present_dict[gid]:
+                        text+=str(i)+"."+str(name)+"(حاضر)"+"\n"
+                    else:
+                        text+=str(i)+"."+str(name)+"\n"
+                markup=InlineKeyboardMarkup()
+                markup_button=[]
+                for i in range(1,int(game_info_in_group[gid]["number"])+1):
+                    if i in total_number_reserv:
+                        markup_button.append(InlineKeyboardButton("✅",callback_data=f"reserve_{i}_ok"))
+                    else:
+                        markup_button.append(InlineKeyboardButton(f"{i}",callback_data=f"reserve_{i}"))
+                markup.add(*markup_button)
+                markup.add(InlineKeyboardButton("👤ثبت نام",url=f"https://t.me/{bot.get_me().username}?start=login"),InlineKeyboardButton("🔴انصراف",callback_data=f"cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🙋حاضری",callback_data=f"present_{game_info_in_group[gid]['gruop_id']}"))
+                markup.add(InlineKeyboardButton("🔄تغییر سناریو",callback_data=f"admin_senario_{gid}_{mid}"),InlineKeyboardButton("🔄تغییر ناظر",callback_data=f"admin_nazer_{gid}_{mid}"))
+                # markup.add(InlineKeyboardButton("🔄تغییر سناریو",url=f"https://t.me/{bot.get_me().username}?start=senario_{gid}_{mid}"),InlineKeyboardButton("🔄تغییر ناظر",url=f"https://t.me/{bot.get_me().username}?start=nazer_{gid}_{mid}"))
+                markup.add(InlineKeyboardButton("❌لغو بازی",callback_data=f"admin_cancel_{game_info_in_group[gid]['gruop_id']}"),InlineKeyboardButton("🎬شروع بازی",callback_data=f"admin_start_{game_info_in_group[gid]['gruop_id']}_{mid}"))
+                markup.add(InlineKeyboardButton("❌حذف بازیکن",callback_data="deluser"))
+                bot.edit_message_caption(
+    f"""
+    📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+    🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+    👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+    🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+    👤کسانی که جوین شدند:
+    ~~~~~~~~~~~~~~~~~~
+    {text}
+    ~~~~~~~~~~~~~~~~~~
+    """,gid,mid,reply_markup=markup,parse_mode="HTML"
+                )
+                bot.answer_callback_query(call.id,"انصراف شما انجام شد")
+            else:
+                bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
         else:
             bot.answer_callback_query(cid,"شما در بازی رزرو نیستید")
     else:
@@ -364,49 +367,52 @@ def select_chanel(call):
             bot.answer_callback_query(call.id,"این قابلیت برای ادمین است")
     elif data[1]=="start":
         if cid in admin:
-            if len(mid_game_in_group[gid])>0:
-                markup=ReplyKeyboardMarkup(resize_keyboard=True)
-                markup.add("کنسل")
-                bot.send_message(cid,"لطفا برای شروع بازی لینکی را که میخواهید برای کاربران ارسال کنید را وارد کنید(URL) \nو در غیر این صورت دکمه کنسل را بزنید")
-                userStep[cid]=800
-                start_game.setdefault(cid,{})
-                start_game[cid]={"gid":data[2],"mid":mid}
-                bot.answer_callback_query(call.id,"برای شروع بازی وارد ربات شوید و مراحل را تکمیل کنید")
-#                 group_name = game_info_in_group[gid]["name"]
-#                 # new_group = bot.create_chat(title=group_name, type='supergroup')
-#                 # bot.create_chat_invite_link(cid,"mahdi")
-#                 for i in mid_game_in_group[gid]:
-#                     bot.send_message(mid_game_in_group[gid][i][0],f"لینک ورود به بازی برای شروع بازی روی لینک زیر بزنید \n{game_info_in_group[gid]["link_srart_game"]}")
+            if gid in mid_game_in_group:
+                if len(mid_game_in_group[gid])>0:
+                    markup=ReplyKeyboardMarkup(resize_keyboard=True)
+                    markup.add("کنسل")
+                    bot.send_message(cid,"لطفا برای شروع بازی لینکی را که میخواهید برای کاربران ارسال کنید را وارد کنید(URL) \nو در غیر این صورت دکمه کنسل را بزنید")
+                    userStep[cid]=800
+                    start_game.setdefault(cid,{})
+                    start_game[cid]={"gid":data[2],"mid":mid}
+                    bot.answer_callback_query(call.id,"برای شروع بازی وارد ربات شوید و مراحل را تکمیل کنید")
+    #                 group_name = game_info_in_group[gid]["name"]
+    #                 # new_group = bot.create_chat(title=group_name, type='supergroup')
+    #                 # bot.create_chat_invite_link(cid,"mahdi")
+    #                 for i in mid_game_in_group[gid]:
+    #                     bot.send_message(mid_game_in_group[gid][i][0],f"لینک ورود به بازی برای شروع بازی روی لینک زیر بزنید \n{game_info_in_group[gid]["link_srart_game"]}")
 
-                
-#                 total_number_reserv=[] 
-#                 # all_cid_reserv=all_cid_reserv.pop(cid)
-#                 # mid_game_in_group[gid].pop(int(all_cid_reserv))
-#                 text=""
-#                 for i in mid_game_in_group[gid]:
-#                     total_number_reserv.append(i)
-#                     name=mid_game_in_group[gid][i][1]
-#                     if mid_game_in_group[gid][i][0] in present_dict[gid]:
-#                         text+=str(i)+"."+str(name)+"(حاضر)"+"\n"
-#                     else:
-#                         text+=str(i)+"."+str(name)+"\n"
 
-#                 bot.edit_message_caption(
-# f"""
-# 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
-# 🕰ساعت شروع:{game_info_in_group[gid]["time"]}
-# 👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
-# 🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
-# 👤کسانی که جوین شدند:
-# ~~~~~~~~~~~~~~~~~~
-# {text}
-# ~~~~~~~~~~~~~~~~~~
-# بازی شروع شد
-# """,gid,mid,parse_mode="HTML"
-#                 )
-#                 mid_game_in_group.pop(gid)
-#                 game_info_in_group.pop(gid)
-#                 present_dict.pop(gid)
+    #                 total_number_reserv=[] 
+    #                 # all_cid_reserv=all_cid_reserv.pop(cid)
+    #                 # mid_game_in_group[gid].pop(int(all_cid_reserv))
+    #                 text=""
+    #                 for i in mid_game_in_group[gid]:
+    #                     total_number_reserv.append(i)
+    #                     name=mid_game_in_group[gid][i][1]
+    #                     if mid_game_in_group[gid][i][0] in present_dict[gid]:
+    #                         text+=str(i)+"."+str(name)+"(حاضر)"+"\n"
+    #                     else:
+    #                         text+=str(i)+"."+str(name)+"\n"
+
+    #                 bot.edit_message_caption(
+    # f"""
+    # 📜سناریو:  <a href='{game_info_in_group[gid]["link_info"]}'>{game_info_in_group[gid]["name"]}</a>
+    # 🕰ساعت شروع:{game_info_in_group[gid]["time"]}
+    # 👥نام گروه :{game_info_in_group[gid]["gruop_name"]}
+    # 🎩ناظر: <a href='https://t.me/{game_info_in_group[gid]["nazer"].replace("@","")}'>{game_info_in_group[gid]["name_nazer"]}</a>
+    # 👤کسانی که جوین شدند:
+    # ~~~~~~~~~~~~~~~~~~
+    # {text}
+    # ~~~~~~~~~~~~~~~~~~
+    # بازی شروع شد
+    # """,gid,mid,parse_mode="HTML"
+    #                 )
+    #                 mid_game_in_group.pop(gid)
+    #                 game_info_in_group.pop(gid)
+    #                 present_dict.pop(gid)
+                else:
+                    bot.answer_callback_query(call.id,"هنوز هیچ شرکت کننده ای برای شروع بازی وجود ندارد")
             else:
                 bot.answer_callback_query(call.id,"هنوز هیچ شرکت کننده ای برای شروع بازی وجود ندارد")
         else:
