@@ -1366,7 +1366,7 @@ def start_game_def3(m):
     start_game[cid].setdefault("room_pass",text)
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("تایید و شروع بازی",callback_data="stgame"))
-    markup.add(InlineKeyboardButton("مقدار دهی مجدد",callback_data=f"admin_start_{start_game[cid]["gid"]}_{start_game[cid]["mid"]}"))
+    markup.add(InlineKeyboardButton("مقدار دهی مجدد",callback_data=f"admin_start_{start_game[cid]['gid']}_{start_game[cid]['mid']}"))
     bot.send_message(cid,f"""
 لینک مستقیم ورود به اتاق : {start_game[cid]["url"]}
 شماره اتاق : {start_game[cid]["room_num"]}
