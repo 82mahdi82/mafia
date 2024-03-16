@@ -1,8 +1,8 @@
+beautifulsoup4==4.12.3
 certifi==2024.2.2
 charset-normalizer==3.3.2
 idna==3.6
-jdatetime==4.1.1
-pyTelegramBotAPI==4.16.1
-pytz==2024.1
+instaloader==4.10.3
 requests==2.31.0
-urllib3==2.2.0
+soupsieve==2.5
+urllib3==2.2.1
