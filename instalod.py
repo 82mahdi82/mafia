@@ -3,7 +3,7 @@ import instaloader
 def download_post(post_id):
     # ساخت یک نمونه از کلاس Instaloader
     loader = instaloader.Instaloader()
-    loader.load_session_from_file("inst_aloder",'my_session')
+    loader.load_session_from_file("inst_aloder",'my_session2')
    # loader.login("inst_aloder","insta82")
    
     try:
