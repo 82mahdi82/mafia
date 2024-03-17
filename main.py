@@ -56,7 +56,7 @@ def listener(messages):
     When new messages arrive TeleBot will call this function.
     """
     for m in messages:
-        print(m)
+       # print(m)
         cid = m.chat.id
         if m.content_type == 'text':
             print(str(m.chat.first_name) +
@@ -92,8 +92,8 @@ def handler_serch_message(m):
     if "https://www.instagram.com/" in text:
         type=text.split("/")[3]
         media_id=text.split("/")[4]
-        print(type)
-        print(media_id)
+       # print(type)
+        #print(media_id)
         check=database.use_media(media_id)
         if len(check)==0:
             instalod.download_post(media_id)
@@ -101,7 +101,7 @@ def handler_serch_message(m):
             for i in list_name:
                 with open(i, 'rb') as photo:  # مسیر فایل عکس
                     message=bot.send_photo(chanel_id, photo)
-                print(message)
+               # print(message)
                 database.insert_media(media_id,message.message_id)
                 bot.forward_message(cid,chanel_id,message.message_id)
             os.rmdir(media_id)
