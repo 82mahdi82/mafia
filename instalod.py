@@ -3,8 +3,9 @@ import instaloader
 def download_post(post_id):
     # ساخت یک نمونه از کلاس Instaloader
     loader = instaloader.Instaloader()
-    loader.login("inst_aloder","insta82")
-
+    loader.load_session_from_file("inst_aloder",'my_session')
+   # loader.login("inst_aloder","insta82")
+   
     try:
         # دریافت اطلاعات پست با استفاده از آی‌دی
         post = instaloader.Post.from_shortcode(loader.context, post_id)
