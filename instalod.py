@@ -3,6 +3,7 @@ import instaloader
 def download_post(post_id):
     # ساخت یک نمونه از کلاس Instaloader
     loader = instaloader.Instaloader()
+    loader.login("inst_aloder","insta82")
 
     try:
         # دریافت اطلاعات پست با استفاده از آی‌دی
