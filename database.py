@@ -3,7 +3,7 @@ import sqlite3
 def creat_database_tables():
     connect = sqlite3.connect("data.db")
     cur = connect.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS medias(media_id int(250) PRIMARY KEY,mid int(250))")
+    cur.execute("CREATE TABLE IF NOT EXISTS medias(media_id int(250),mid int(250))")
     connect.commit()
     connect.close()
 
