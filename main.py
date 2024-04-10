@@ -4585,7 +4585,7 @@ def name_custom(m):
     dict_info_post=database.use_post_table(dict_posend_info[cid]["post_name"],dict_posend_info[cid]["uid"])[0]
     ID=database.use_profile_table(cid)[0]["ID"]
     markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"ansposend_{cid}_{dict_posend_info[cid]["post_name"]}"))
+    markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"ansposend_{cid}_{dict_posend_info[cid]['post_name']}"))
     bot.send_message(dict_posend_info[cid]["uid"],f"""
 پیام جدید
 پروفایل کاربر: /user_{ID}
@@ -4606,7 +4606,7 @@ def name_custom(m):
     dict_info_post=database.use_post_table(dict_posend_info[cid]["post_name"],dict_posend_info[cid]["uid"])[0]
     ID=database.use_profile_table(cid)[0]["ID"]
     markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{cid}_{dict_posend_info[cid]["post_name"]}"))
+    markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{cid}_{dict_posend_info[cid]['post_name']}"))
     bot.send_message(dict_posend_info[cid]["uid"],f"""
 پیام جدید
 پروفایل کاربر: /user_{ID}
