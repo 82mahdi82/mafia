@@ -2,7 +2,7 @@ import mysql.connector
 import time
 
 def create_database():
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db')
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service')
     cursor = cnx.cursor()
     # cursor.execute("DROP database IF EXISTS data")
     cursor.execute("create database if not exists data")
@@ -170,55 +170,55 @@ def create_database():
 #-------------------------------------------profile------------------------------------------------
 
 def use_all_profile():
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from profile")
     dict_product=cursor.fetchall()
     return dict_product
 def use_profile_table(cid):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from profile where cid={cid}")
     dict_product=cursor.fetchall()
     return dict_product
 
 def use_profile_id_table(id):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from profile where ID={id}")
     dict_product=cursor.fetchall()
     return dict_product
 
 def add_validity(ID,validity):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute(f"update profile set validity=validity+{validity} where ID={ID}")
     cursor.close()
     cnx.commit()
 
 def sub_validity(ID,validity):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute(f"update profile set validity=validity-{validity} where ID={ID}")
     cursor.close()
     cnx.commit()
 
 def all_use_profile_table():
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from profile")
     dict_product=cursor.fetchall()
     return dict_product
 
 def insert_profile_first_table(cid,ID):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute("insert into profile (cid,ID) values (%s,%s)",(cid,ID))
     cursor.close()
     cnx.commit()
 
 def update_profile_one_table(cid,key,value):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute(f"update profile set {key}='{value}' where cid={cid}")
     cursor.close()
@@ -227,49 +227,49 @@ def update_profile_one_table(cid,key,value):
 #--------------------------------------------------post---------------------------------------------------------------------
 
 def insert_post_first_table(post,cid):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute(f"insert into {post} (cid) values (%s)",(cid,))
     cursor.close()
     cnx.commit()
 
 def use_post_table(post,cid):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from {post} where cid={cid}")
     dict_product=cursor.fetchall()
     return dict_product
 
 def use_post_table_shenase(post,shenase):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from {post} where shenase={shenase}")
     dict_product=cursor.fetchall()
     return dict_product
 
 def use_post_on_table(post):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select * from {post} where post='yes'")
     dict_product=cursor.fetchall()
     return dict_product
 
 def use_post_one_table(post,row,cid):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
     cursor.execute(f"select {row} from {post} where cid={cid}")
     dict_product=cursor.fetchall()
     return dict_product
 
 def update_post_one_table(post,cid,key,value):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute(f"update {post} set {key}='{value}' where cid={cid}")
     cursor.close()
     cnx.commit()
 
 def update_post_last_table(post_name,post,shenase,status,date,cid):
-    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='datasps_db',database="data")
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
     cursor.execute(f"update {post_name} set post='{post}' ,shenase={shenase}, status='{status}', date='{date}' where cid={cid}")
     cursor.close()
