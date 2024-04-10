@@ -72,6 +72,7 @@ def main_menu_keyboard_for_profile(cid):
 def button_inlin_edit_profile(cid):
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("برای ادیت کردن هر مورد روی دکمه کلیک کنید",callback_data="none"))
+    markup.add(InlineKeyboardButton("عکس",callback_data=f"edit_photo_{cid}"))
     markup.add(InlineKeyboardButton("اسم",callback_data=f"edit_name_{cid}"),InlineKeyboardButton("جنسیت",callback_data=f"edit_gender_{cid}"))
     markup.add(InlineKeyboardButton("سن",callback_data=f"edit_age_{cid}"),InlineKeyboardButton("تحصیلات",callback_data=f"edit_education_{cid}"))
     markup.add(InlineKeyboardButton("قد",callback_data=f"edit_height_{cid}"),InlineKeyboardButton("وزن",callback_data=f"edit_weight_{cid}"))
@@ -1935,6 +1936,12 @@ def nmayesh(call):
     dict_info_profile=list_dict_profile_new[0]
     if data[1]=="profile":
         bot.edit_message_reply_markup(cid,mid,reply_markup=button_inlin_edit_profile(cid))
+    elif data[1]=="photo":
+        bot.delete_message(cid,mid)
+        markup=InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("لغو و بازگشت",callback_data="back_profilem"))
+        bot.send_message(cid,"لطفا عکس پروفایل خود را ارسال کنید:")
+        userStep[cid]=2 
     elif data[1]=="name":
         bot.delete_message(cid,mid)
         markup=InlineKeyboardMarkup()
@@ -2444,7 +2451,20 @@ def call_callback_panel_amar(call):
                 bot.edit_message_text("""
 پنل مدیریت
 برای مشاهده و حذف کاربران آیدی کاربر را ارسال کنید
+و برای حذف یک پست آیدی پست را ارسال کنید
 """,cid,mid,reply_markup=markup)
+            elif data[2]=="panelnew":
+                markup=InlineKeyboardMarkup()
+                markup.add(InlineKeyboardButton(' تعداد کاربران',callback_data='panel_amar'))
+                markup.add(InlineKeyboardButton("آمار نموداری کاربران",callback_data="admin_Amounts"))
+                markup.add(InlineKeyboardButton('ارسال همگانی',callback_data='panel_brodcast'),InlineKeyboardButton('فوروارد همگانی',callback_data='panel_forall'))
+                markup.add(InlineKeyboardButton("تغییر اعتبار",callback_data="admin_vailidity"))
+                bot.send_message(cid,"""
+پنل مدیریت
+برای مشاهده و حذف کاربران آیدی کاربر را ارسال کنید
+و برای حذف یک پست آیدی پست را ارسال کنید
+""",reply_markup=markup)
+                bot.delete_message(cid,mid)
 
 
         elif data[1]=="Amounts":
@@ -2517,6 +2537,23 @@ def call_callback_panel_amar(call):
                 dict_validity.setdefault('ID',0)
                 dict_validity["ID"]=int(data[3])
                 userStep[cid]=1004
+        elif data[1]=="delete":
+            post_name=data[2]
+            uid=int(data[3])
+            database.update_post_one_table(post_name,uid,"post","no")
+            bot.delete_message(cid,mid)
+            bot.answer_callback_query(call.id,"پست مورد نظر حذف شد")
+            markup=InlineKeyboardMarkup()
+            markup.add(InlineKeyboardButton(' تعداد کاربران',callback_data='panel_amar'))
+            markup.add(InlineKeyboardButton("آمار نموداری کاربران",callback_data="admin_Amounts"))
+            markup.add(InlineKeyboardButton('ارسال همگانی',callback_data='panel_brodcast'),InlineKeyboardButton('فوروارد همگانی',callback_data='panel_forall'))
+            markup.add(InlineKeyboardButton("تغییر اعتبار",callback_data="admin_vailidity"))
+            bot.send_message(cid,"""
+پنل مدیریت
+برای مشاهده و حذف کاربران آیدی کاربر را ارسال کنید
+و برای حذف یک پست آیدی پست را ارسال کنید
+""",reply_markup=markup)
+            
 
 #-----------------------------------------------------------------commands-----------------------------------------------------------
 
@@ -2536,6 +2573,7 @@ def command_start(m):
 سلام ادمین گرامی به ربات خوش آمدید
 برای تنظیم ربات از دکمه های زیر استفاده کنید
 و برای مشاهده و حذف کاربران آیدی کاربر را ارسال کنید
+و برای حذف یک پست آیدی پست را ارسال کنید
 """,reply_markup=markup)
     else:
         dict_receive_direct_message.setdefault(cid,"on")
@@ -2617,8 +2655,8 @@ def handel_text(m):
                     markup.add(InlineKeyboardButton("بلاک کردن کاربر",callback_data=f"admin_block_{dict_info_user['cid']}"))
                 else:
                     markup.add(InlineKeyboardButton("آنبلاک کردن کاربر",callback_data=f"admin_unblock_{dict_info_user['cid']}"))
-                markup.add(InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
-                bot.send_message(cid,text_edit_profile(dict_info_user)+f"\nموجودی: {dict_info_user['validity']}",reply_markup=markup)
+                markup.add(InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panelnew"))
+                bot.send_photo(cid,dict_info_user['photo'],text_edit_profile(dict_info_user)+f"\nموجودی: {dict_info_user['validity']}",reply_markup=markup)
                 return
             
 
@@ -2662,122 +2700,125 @@ def handel_text(m):
     if len(list_info)>0:
         dict_info=list_info[0]
         dict_profile=database.use_profile_table(dict_info["cid"])[0]
-        if post_name=="girlfriend":
-            text=f"""
+        if dict_info['post']=="yes":
+            if post_name=="girlfriend":
+                text=f"""
 موضوع پست: دوست دختر
 ● درباره من: {dict_info["ebout"]}
 ● درباره دوست دختری که میخوام: {dict_info["ebout_girl"]}
 ● رنج سنی دوست دختری که میخوام: {dict_info["age_f"]}
 """
-        elif post_name=="boyfriend":
-            text=f"""
+            elif post_name=="boyfriend":
+                text=f"""
 موضوع پست: دوست پسر
 ● درباره من: {dict_info["ebout"]}
 ● درباره دوست پسری که میخوام: {dict_info["ebout_boy"]}
 ● رنج سنی دوست پسرم: {dict_info["age_f"]}
 """
-        elif post_name=="hhome":
-            text=f"""
+            elif post_name=="hhome":
+                text=f"""
 موضوع پست: همخونه
 ● درباره من: {dict_info["ebout"]}
 ● درباره همخونه ای که میخوام: {dict_info["ebout_hhome"]}
 ● ویژگی های خونه ای که دارم یا میخوام: {dict_info["ebout_home"]}
 """
-        elif post_name=="sugermommy":
-            text=f"""
+            elif post_name=="sugermommy":
+                text=f"""
 موضوع پست: شوگرمامی
 ● درباره من: {dict_info["ebout"]}
 ● درباره پسری که میخوام: {dict_info["ebout_boy"]}
 ● رنج سنی پسری که میخوام: {dict_info["age_f"]}
 """
-        elif post_name=="sugerdady":
-            text=f"""
+            elif post_name=="sugerdady":
+                text=f"""
 موضوع پست: شوگرددی
 ● درباره من: {dict_info["ebout"]}
 ● درباره دختری که میخوام: {dict_info["ebout_girl"]}
 ● رنج سنی دختری که میخوام: {dict_info["age_f"]}
 """
-        elif post_name=="tompmarri":
-            text=f"""
+            elif post_name=="tompmarri":
+                text=f"""
 موضوع پست: ازدواج موقت
 ● درباره من: {dict_info["ebout"]}
 ● درباره پسر/دختری که میخوام: {dict_info["ebout_boy_girl"]}
 ● رنج سنی پسر/دختری که میخوام: {dict_info["age_f"]}
 ● چقدر مهریه میدم/میگیرم: {dict_info["dowry"]}
 """
-        elif post_name=="marri":
-            text=f"""
+            elif post_name=="marri":
+                text=f"""
 موضوع پست: ازدواج دائم
 ● درباره من: {dict_info["ebout"]}
 ● درباره پسر/دختری که میخوام: {dict_info["ebout_boy_girl"]}
 ● رنج سنی پسر/دختری که میخوام: {dict_info["age_f"]}
 """
-        elif post_name=="partnerlang":
-            text=f"""
+            elif post_name=="partnerlang":
+                text=f"""
 موضوع پست: پارتنر زبان
 ● درباره هدف من: {dict_info["ebout"]}
 ● درباره پارتنری که میخوام: {dict_info["ebout_you"]}
 ● رنج سنی پارتنرم: {dict_info["age_f"]}
 """
-        elif post_name=="partnerkoo":
-            text=f"""
+            elif post_name=="partnerkoo":
+                text=f"""
 موضوع پست: پارتنر کنکور
 ● درباره هدف من: {dict_info["ebout"]}
 ● درباره پارتنری که میخوام: {dict_info["ebout_you"]}
 ● رنج سنی پارتنرم: {dict_info["age_f"]}
 """
-        elif post_name=="teachlang":
-            text=f"""
+            elif post_name=="teachlang":
+                text=f"""
 موضوع پست: تدریس زبان
 ● درباره من: {dict_info["ebout"]}
 ● چیزی که تدریس میکنم: {dict_info["whatteach"]}
 ● سابقه تدریس من: {dict_info["teach_exp"]}
 ● هزینه تدریس من: {dict_info["cost"]}
 """
-        elif post_name=="teachkoo":
-            text=f"""
+            elif post_name=="teachkoo":
+                text=f"""
 موضوع پست: تدریس دروس کنکور
 ● درباره هدف من: {dict_info["ebout"]}
 ● چیزی که تدریس میکنم: {dict_info["whatteach"]}
 ● سابقه تدریس من: {dict_info["teach_exp"]}
 ● هزینه تدریس من: {dict_info["cost"]}
 """
-        elif post_name=="teachuniv":
-            text=f"""
+            elif post_name=="teachuniv":
+                text=f"""
 موضوع پست: تدریس دروس دانشگاهی
 ● درباره هدف من: {dict_info["ebout"]}
 ● چیزی که تدریس میکنم: {dict_info["whatteach"]}
 ● سابقه تدریس من: {dict_info["teach_exp"]}
 ● هزینه تدریس من: {dict_info["cost"]}
 """
-        elif post_name=="teachsys":
-            text=f"""
+            elif post_name=="teachsys":
+                text=f"""
 موضوع پست: تدریس نرم افزار
 ● درباره هدف من: {dict_info["ebout"]}
 ● چیزی که تدریس میکنم: {dict_info["whatteach"]}
 ● سابقه تدریس من: {dict_info["teach_exp"]}
 ● هزینه تدریس من: {dict_info["cost"]}
 """
-        elif post_name=="projectuinv":
-            text=f"""
+            elif post_name=="projectuinv":
+                text=f"""
 موضوع پست: انجام پروژه درسی
 ● درباره هدف من: {dict_info["ebout"]}
 ● درباره تخصص من: {dict_info["ecpertise"]}
 """
-        elif post_name=="projectwork":
-            text=f"""
+            elif post_name=="projectwork":
+                text=f"""
 موضوع پست: انجام پروژه حرفه ای
 ● درباره هدف من: {dict_info["ebout"]}
 ● درباره تخصص من: {dict_info["ecpertise"]}
 """
 
 
-        markup=InlineKeyboardMarkup()
-        if dict_info["cid"]==cid:
-            markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))
-        else:
-            markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{dict_info['cid']}_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))#posend_cidpost_postname
-        bot.send_message(cid,f"""
+            markup=InlineKeyboardMarkup()
+            if dict_info["cid"]==cid:
+                markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))
+            elif cid == admin:
+                markup.add(InlineKeyboardButton("حذف پست",callback_data=f"admin_delete_{post_name}_{dict_info['cid']}"),InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
+            else:
+                markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{dict_info['cid']}_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))#posend_cidpost_postname
+            bot.send_message(cid,f"""
 شناسه پست: {dict_info["shenase"]}
 
 {text}
@@ -2785,6 +2826,9 @@ def handel_text(m):
 پروفایل پست گذار: /user_{dict_profile["ID"]}
 بروزرسانی : {dict_info["date"]}
 """,reply_markup=markup)
+        else:
+            bot.send_message(cid,"پستی با این مشخصات وجود ندارد")
+            userStep[cid]=0
     else:
         bot.send_message(cid,"پستی با این مشخصات وجود ندارد")
         userStep[cid]=0
@@ -3409,15 +3453,15 @@ def name_custom(m):
     bot.send_photo(cid,dict_info_profile["photo"],text_edit_profile(dict_info_profile),reply_markup=button_inlin_edit_profile(cid))
     userStep[cid]=0
 
-@bot.message_handler(func=lambda m: get_user_step(m.chat.id)==2)
-def name_custom(m):
-    cid = m.chat.id
-    age=m.text+" سال"
-    database.update_profile_one_table(cid,"age",age)
-    list_dict_profile_new=database.use_profile_table(cid)
-    dict_info_profile=list_dict_profile_new[0]
-    bot.send_photo(cid,dict_info_profile["photo"],text_edit_profile(dict_info_profile),reply_markup=button_inlin_edit_profile(cid))
-    userStep[cid]=0
+# @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==2)
+# def name_custom(m):
+#     cid = m.chat.id
+#     age=m.text+" سال"
+#     database.update_profile_one_table(cid,"age",age)
+#     list_dict_profile_new=database.use_profile_table(cid)
+#     dict_info_profile=list_dict_profile_new[0]
+#     bot.send_photo(cid,dict_info_profile["photo"],text_edit_profile(dict_info_profile),reply_markup=button_inlin_edit_profile(cid))
+#     userStep[cid]=0
 
 @bot.message_handler(func=lambda m: get_user_step(m.chat.id)==3)
 def name_custom(m):
@@ -4712,9 +4756,32 @@ def name_custom(m):
         markup.add(InlineKeyboardButton("لغو و بازگشت به پنل",callback_data="admin_back_panel"))
         bot.send_message(cid,"لطفا برای کاهش اعتبار فقط عدد انگلیسی ارسال کنید:",reply_markup=markup)
 
+@bot.message_handler(content_types=['photo', 'voice', 'sticker',"video",'animation'])
+def handle_messages(m):
+    cid = m.chat.id
+    mid=m.message_id
+    if get_user_step(cid)==2:
+        if m.content_type == 'photo':
+            print(m.photo[-1].file_id)
+            database.update_profile_one_table(cid,"photo",m.photo[-1].file_id)
+            list_dict_profile_new=database.use_profile_table(cid)
+            dict_info_profile=list_dict_profile_new[0]
+            bot.send_photo(cid,dict_info_profile["photo"],text_edit_profile(dict_info_profile),reply_markup=button_inlin_edit_profile(cid))
+            userStep[cid]=0
+        else:
+            bot.send_message(cid, "مقدار وارد شده نامعتبر است \nدر صورت نیاز به راهنمایی /start را بزنید ")
+
+    elif get_user_step(cid)==100:   
+        bot.copy_message(people_chatting_anonymous[cid],cid,mid) 
+    else:
+        bot.send_message(cid, "مقدار وارد شده نامعتبر است \nدر صورت نیاز به راهنمایی /start را بزنید ")
+
+
+
+
 
 @bot.message_handler(func=lambda m: True)
 def product(m):
     cid = m.chat.id
-    # bot.send_message(cid, "مقدار وارد شده نامعتبر است ")
+    bot.send_message(cid, "مقدار وارد شده نامعتبر است \nدر صورت نیاز به راهنمایی /start را بزنید ")
 bot.infinity_polling()
