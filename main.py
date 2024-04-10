@@ -2618,7 +2618,7 @@ def handel_text(m):
                 else:
                     markup.add(InlineKeyboardButton("آنبلاک کردن کاربر",callback_data=f"admin_unblock_{dict_info_user['cid']}"))
                 markup.add(InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
-                bot.send_message(cid,text_edit_profile(dict_info_user)+f"\nموجودی: {dict_info_user["validity"]}",reply_markup=markup)
+                bot.send_message(cid,text_edit_profile(dict_info_user)+f"\nموجودی: {dict_info_user['validity']}",reply_markup=markup)
                 return
             
 
@@ -2776,7 +2776,7 @@ def handel_text(m):
         if dict_info["cid"]==cid:
             markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))
         else:
-            markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{dict_info["cid"]}_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))#posend_cidpost_postname
+            markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{dict_info['cid']}_{post_name}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))#posend_cidpost_postname
         bot.send_message(cid,f"""
 شناسه پست: {dict_info["shenase"]}
 
