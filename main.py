@@ -2614,9 +2614,9 @@ def handel_text(m):
             else:
                 markup=InlineKeyboardMarkup()
                 if dict_info_user["cid"] not in list_admin_block:
-                    markup.add(InlineKeyboardButton("بلاک کردن کاربر",callback_data=f"admin_block_{dict_info_user["cid"]}"))
+                    markup.add(InlineKeyboardButton("بلاک کردن کاربر",callback_data=f"admin_block_{dict_info_user['cid']}"))
                 else:
-                    markup.add(InlineKeyboardButton("آنبلاک کردن کاربر",callback_data=f"admin_unblock_{dict_info_user["cid"]}"))
+                    markup.add(InlineKeyboardButton("آنبلاک کردن کاربر",callback_data=f"admin_unblock_{dict_info_user['cid']}"))
                 markup.add(InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
                 bot.send_message(cid,text_edit_profile(dict_info_user)+f"\nموجودی: {dict_info_user["validity"]}",reply_markup=markup)
                 return
@@ -2627,19 +2627,19 @@ def handel_text(m):
         if dict_info_user["cid"]!=cid:
             markup=InlineKeyboardMarkup()
             if int(dict_info_user["cid"]) in people_chatting_anonymous:
-                markup.add(InlineKeyboardButton("درخواست چت(کاربر درحال چت است)",callback_data=f"request_chating_{dict_info_user["cid"]}_{id}"))
+                markup.add(InlineKeyboardButton("درخواست چت(کاربر درحال چت است)",callback_data=f"request_chating_{dict_info_user['cid']}_{id}"))
             else:
                 if int(dict_info_user["cid"]) in dict_cid_chat_anonymous:
-                    markup.add(InlineKeyboardButton("درخواست چت(کاربر درحال چت است)",callback_data=f"request_chating_{dict_info_user["cid"]}_{id}"))
+                    markup.add(InlineKeyboardButton("درخواست چت(کاربر درحال چت است)",callback_data=f"request_chating_{dict_info_user['cid']}_{id}"))
                 else:
-                    markup.add(InlineKeyboardButton("درخواست چت",callback_data=f"request_chat_{dict_info_user["cid"]}_{id}"))
+                    markup.add(InlineKeyboardButton("درخواست چت",callback_data=f"request_chat_{dict_info_user['cid']}_{id}"))
             if cid in dict_block:
                 if id in dict_block[cid]:
-                    markup.add(InlineKeyboardButton("آنبلاک کردن",callback_data=f"unblock_{dict_info_user["cid"]}_{id}"))
+                    markup.add(InlineKeyboardButton("آنبلاک کردن",callback_data=f"unblock_{dict_info_user['cid']}_{id}"))
                 else:
-                    markup.add(InlineKeyboardButton("بلاک کردن",callback_data=f"block_{dict_info_user["cid"]}_{id}"))
+                    markup.add(InlineKeyboardButton("بلاک کردن",callback_data=f"block_{dict_info_user['cid']}_{id}"))
             else:
-                markup.add(InlineKeyboardButton("بلاک کردن",callback_data=f"block_{dict_info_user["cid"]}_{id}"))
+                markup.add(InlineKeyboardButton("بلاک کردن",callback_data=f"block_{dict_info_user['cid']}_{id}"))
             # markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"send_m_{dict_info_user["cid"]}"))
             print(dict_info_user)
             bot.send_photo(cid,dict_info_user["photo"],text_edit_profile(dict_info_user),reply_markup=markup)
