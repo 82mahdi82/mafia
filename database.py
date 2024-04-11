@@ -4,7 +4,7 @@ import time
 def create_database():
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service')
     cursor = cnx.cursor()
-    # cursor.execute("DROP database IF EXISTS data")
+    cursor.execute("DROP database IF EXISTS data")
     cursor.execute("create database if not exists data")
     cursor.execute("use data")
     cursor.execute("""CREATE TABLE if not exists profile (cid bigint PRIMARY KEY,
