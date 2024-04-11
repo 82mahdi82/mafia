@@ -8,7 +8,7 @@ def create_database():
     cursor.execute("create database if not exists data")
     cursor.execute("use data")
     cursor.execute("""CREATE TABLE if not exists profile (cid bigint PRIMARY KEY,
-                photo VARCHAR(300) DEFAULT 'AgACAgQAAxkBAAI3wmYPvX4hkpjvxDYFKAQMF_Za41qaAALbxzEbi0x5UCNROuj45nOoAQADAgADbQADNAQ',
+                photo VARCHAR(300) DEFAULT 'AgACAgQAAxkBAANsZheRw_PnIgtudaEycU_ERk4aszIAAnzCMRuUXcFQFcX4ZKGOEcgBAAMCAANtAAM0BA',
                 name VARCHAR(25) DEFAULT 'وارد نشده',
                 gender VARCHAR(25) DEFAULT 'وارد نشده',
                 age VARCHAR(25) DEFAULT 'وارد نشده',
