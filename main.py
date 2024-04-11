@@ -8,10 +8,11 @@ import amar
 
 database.create_database()
 
-TOKEN ='6317356905:AAGQ2p8Lo0Kc4mkChTmE7ZbI2p1bzw9cIO8'
+TOKEN ='7131290895:AAGu4M4FL3wGI_f_F4oCSpA5clA2KrPxH-0'
 
 userStep ={}
-admin=748626808
+admin=6787950647
+chanel_id=-1001530508024
 dict_receive_direct_message={}#cid:"off\on"
 dict_receive_chat_request={}#cid:"off\on"
 dict_cid_chat_anonymous={}#cid:[anony\bpy\girl(you),anony\bpy\girl(search)]
@@ -28,6 +29,14 @@ def get_user_step(uid):
         userStep[uid] = 0
         return 0
 
+
+def is_user_member(user_id, channel_id):
+    try:
+        chat_member = bot.get_chat_member(channel_id, user_id)
+        return chat_member.status == "member" or chat_member.status == "administrator" or chat_member.status == "creator"
+    except Exception as e:
+        #print(f"Error checking membership: {e}")
+        return False
 
 def listener(messages):
     """
@@ -2555,6 +2564,10 @@ def call_callback_panel_amar(call):
 """,reply_markup=markup)
             
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("barresi"))
+def call_callback_panel_amar(call):
+    cid = call.message.chat.id
+    command_start(call.message)
 #-----------------------------------------------------------------commands-----------------------------------------------------------
 
 
@@ -2576,52 +2589,64 @@ def command_start(m):
 و برای حذف یک پست آیدی پست را ارسال کنید
 """,reply_markup=markup)
     else:
-        dict_receive_direct_message.setdefault(cid,"on")
-        dict_receive_chat_request.setdefault(cid,"on")
-        dict_block.setdefault(cid,[])
-        list_dict_profile=database.use_profile_table(cid)
-        if len(list_dict_profile)==0:
-            if len(m.text.split(" "))==2:
-                list_id_for_va=database.use_profile_id_table(int(m.text.split(" ")[1]))
-                if len(list_id_for_va)==1:
-                    uid=int(list_id_for_va[0]["cid"])
-                    if cid != uid:
-                        database.add_validity(uid,1000)
-                        bot.send_message(uid,"یک کاربر با لینک دعوت شما وارد ربات شد و یه موجودی شما هزار تومن اضافه شد")
-            list_dict_pr=database.all_use_profile_table()
-            if len(list_dict_pr)>0:
-                list_id=[]
-                for i in list_dict_pr:
-                    list_id.append(i["ID"])
-                id=0
-                print(list_id)
-                while True:
-                    id=random.randint(1000000,9999999)
-                    if id not in list_id:
-                        break
-                database.insert_profile_first_table(cid,id)
-                
-            else:
-                id=random.randint(1000000,9999999)
-                database.insert_profile_first_table(cid,id)
+        
+        if is_user_member(cid ,chanel_id) :
+            dict_receive_direct_message.setdefault(cid,"on")
+            dict_receive_chat_request.setdefault(cid,"on")
+            dict_block.setdefault(cid,[])
+            list_dict_profile=database.use_profile_table(cid)
+            if len(list_dict_profile)==0:
+                if len(m.text.split(" "))==2:
+                    list_id_for_va=database.use_profile_id_table(int(m.text.split(" ")[1]))
+                    if len(list_id_for_va)==1:
+                        uid=int(list_id_for_va[0]["cid"])
+                        if cid != uid:
+                            database.add_validity(uid,1000)
+                            bot.send_message(uid,"یک کاربر با لینک دعوت شما وارد ربات شد و یه موجودی شما هزار تومن اضافه شد")
+                list_dict_pr=database.all_use_profile_table()
+                if len(list_dict_pr)>0:
+                    list_id=[]
+                    for i in list_dict_pr:
+                        list_id.append(i["ID"])
+                    id=0
+                    print(list_id)
+                    while True:
+                        id=random.randint(1000000,9999999)
+                        if id not in list_id:
+                            break
+                    database.insert_profile_first_table(cid,id)
 
-        markup=ReplyKeyboardMarkup(resize_keyboard=True)
-        if cid in dict_cid_chat_anonymous:
-            markup.add("لغو جستجو")
-        markup.add("پروفایل👤")
-        markup.add("دوست دختر🙋‍","دوست پسر🙋‍♂")
-        markup.add("شوگر مامی🙎‍","شوگر ددی🙎‍")
-        markup.add("ازدواج موقت👩‍❤️‍👨","ازدواج دائم💍")
-        markup.add("همخونه یابی🏠")
-        markup.add("🙎‍♂اتصال به ناشناس🙎‍")
-        markup.add("تدریس📖","پارتنر علمی👨‍🎓")
-        markup.add("انجام پروژه","تبلیغات📰")
-        markup.add("پشتیبانی📬","توضیحات")
-        markup.add("دعوت دوستان👥")
-        bot.send_message(cid,f"""
+                else:
+                    id=random.randint(1000000,9999999)
+                    database.insert_profile_first_table(cid,id)
+
+            markup=ReplyKeyboardMarkup(resize_keyboard=True)
+            if cid in dict_cid_chat_anonymous:
+                markup.add("لغو جستجو")
+            markup.add("پروفایل👤")
+            markup.add("دوست دختر🙋‍","دوست پسر🙋‍♂")
+            markup.add("شوگر مامی🙎‍","شوگر ددی🙎‍")
+            markup.add("ازدواج موقت👩‍❤️‍👨","ازدواج دائم💍")
+            markup.add("همخونه یابی🏠")
+            markup.add("🙎‍♂اتصال به ناشناس🙎‍")
+            markup.add("تدریس📖","پارتنر علمی👨‍🎓")
+            markup.add("انجام پروژه","تبلیغات📰")
+            markup.add("پشتیبانی📬","توضیحات")
+            markup.add("دعوت دوستان👥")
+            bot.send_message(cid,f"""
 سلام {m.chat.first_name} عزیز 
 به ربات دوست یابی خوش آمدید برای استفاده از ربات از دکمه های زیر استفاده کنید
 """,reply_markup=markup)
+        else:
+            markup=InlineKeyboardMarkup() 
+            markup.add(InlineKeyboardButton("کانال ",url="https://t.me/MeetMateAI_Channel"))
+            markup.add(InlineKeyboardButton("بررسی",callback_data="barresi")) 
+            bot.send_message(cid,f"""
+سلام {m.chat.first_name} عزیز
+به ربات دوست یابی خوش آمدید 
+برای استفاده از ربات لطفا در کانال زیر عضو شوید
+""",reply_markup=markup)
+
 
 
 #------------------------------------------------------------m.text-----------------------------------------------------------------
