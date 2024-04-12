@@ -1,6 +1,6 @@
 import mysql.connector
 import time
-
+#'AgACAgQAAxkBAANsZheRw_PnIgtudaEycU_ERk4aszIAAnzCMRuUXcFQFcX4ZKGOEcgBAAMCAANtAAM0BA',
 def create_database():
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service')
     cursor = cnx.cursor()
@@ -25,143 +25,166 @@ def create_database():
                 ID int(20))""")
     
 
-    cursor.execute("""CREATE TABLE if not exists girlfriend (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_girl VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists girlfriend (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_girl VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
     
-    cursor.execute("""CREATE TABLE if not exists boyfriend (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_boy VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists boyfriend (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_boy VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
 
-    cursor.execute("""CREATE TABLE if not exists hhome (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_hhome VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists hhome (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_hhome VARCHAR(600) DEFAULT 'وارد نشده',
                 ebout_home VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")  
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")  
 
-    cursor.execute("""CREATE TABLE if not exists sugermommy (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_boy VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists sugermommy (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_boy VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
 
-    cursor.execute("""CREATE TABLE if not exists sugerdady (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_girl VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists sugerdady (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_girl VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
      
-    cursor.execute("""CREATE TABLE if not exists tompmarri (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_boy_girl VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists tompmarri (cid bigint,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_boy_girl VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 dowry VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""") 
+                date VARCHAR(25),
+                future_date VARCHAR(25))""") 
     
-    cursor.execute("""CREATE TABLE if not exists marri (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_boy_girl VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists marri (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_boy_girl VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
 
-    cursor.execute("""CREATE TABLE if not exists partnerlang (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_you VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists partnerlang (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_you VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""") 
+                date VARCHAR(25),
+                future_date VARCHAR(25))""") 
 
-    cursor.execute("""CREATE TABLE if not exists partnerkoo (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ebout_you VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists partnerkoo (cid bigint,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ebout_you VARCHAR(600) DEFAULT 'وارد نشده',
                 age_f VARCHAR(25) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
     
-    cursor.execute("""CREATE TABLE if not exists teachlang (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                whatteach VARCHAR(25) DEFAULT 'وارد نشده',
-                teach_exp VARCHAR(25) DEFAULT 'وارد نشده',
-                cost VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists teachlang (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                whatteach VARCHAR(600) DEFAULT 'وارد نشده',
+                teach_exp VARCHAR(600) DEFAULT 'وارد نشده',
+                cost VARCHAR(600) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
     
-    cursor.execute("""CREATE TABLE if not exists teachkoo (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                whatteach VARCHAR(25) DEFAULT 'وارد نشده',
-                teach_exp VARCHAR(25) DEFAULT 'وارد نشده',
-                cost VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists teachkoo (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                whatteach VARCHAR(600) DEFAULT 'وارد نشده',
+                teach_exp VARCHAR(600) DEFAULT 'وارد نشده',
+                cost VARCHAR(600) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
 
-    cursor.execute("""CREATE TABLE if not exists teachuniv (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                whatteach VARCHAR(25) DEFAULT 'وارد نشده',
-                teach_exp VARCHAR(25) DEFAULT 'وارد نشده',
-                cost VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists teachuniv (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                whatteach VARCHAR(600) DEFAULT 'وارد نشده',
+                teach_exp VARCHAR(600) DEFAULT 'وارد نشده',
+                cost VARCHAR(600) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""")
+                date VARCHAR(25),
+                future_date VARCHAR(25))""")
 
-    cursor.execute("""CREATE TABLE if not exists teachsys (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                whatteach VARCHAR(25) DEFAULT 'وارد نشده',
-                teach_exp VARCHAR(25) DEFAULT 'وارد نشده',
-                cost VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists teachsys (cid bigint,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                whatteach VARCHAR(600) DEFAULT 'وارد نشده',
+                teach_exp VARCHAR(600) DEFAULT 'وارد نشده',
+                cost VARCHAR(600) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""") 
+                date VARCHAR(25),
+                future_date VARCHAR(25))""") 
     
-    cursor.execute("""CREATE TABLE if not exists projectuinv (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ecpertise VARCHAR(25) DEFAULT 'وارد نشده',
-                post VARCHAR(25) DEFAULT 'no',
+    cursor.execute("""CREATE TABLE if not exists projectuinv (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ecpertise VARCHAR(600) DEFAULT 'وارد نشده',
+                post VARCHAR(600) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""") 
+                date VARCHAR(25),
+                future_date VARCHAR(25))""") 
     
-    cursor.execute("""CREATE TABLE if not exists projectwork (cid bigint PRIMARY KEY,
-                ebout VARCHAR(300) DEFAULT 'وارد نشده',
-                ecpertise VARCHAR(25) DEFAULT 'وارد نشده',
+    cursor.execute("""CREATE TABLE if not exists projectwork (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                ecpertise VARCHAR(600) DEFAULT 'وارد نشده',
                 post VARCHAR(25) DEFAULT 'no',
                 shenase int(20),
                 status VARCHAR(25),
-                date VARCHAR(25))""") 
+                date VARCHAR(25),
+                future_date VARCHAR(25))""") 
+
+    cursor.execute("""CREATE TABLE if not exists advertising (cid bigint ,
+                ebout VARCHAR(600) DEFAULT 'وارد نشده',
+                post VARCHAR(25) DEFAULT 'no',
+                shenase int(20),
+                status VARCHAR(25),
+                date VARCHAR(25),
+                future_date VARCHAR(25))""") 
 
     print("created")
     cursor.close()
@@ -226,12 +249,19 @@ def update_profile_one_table(cid,key,value):
 
 #--------------------------------------------------post---------------------------------------------------------------------
 
-def insert_post_first_table(post,cid):
+def insert_post_first_table(post,cid,shenase):
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
-    cursor.execute(f"insert into {post} (cid) values (%s)",(cid,))
+    cursor.execute(f"insert into {post} (cid,shenase) values (%s,%s)",(cid,shenase))
     cursor.close()
     cnx.commit()
+
+# def use_post_table(post,cid):
+#     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
+#     cursor = cnx.cursor(dictionary=True)
+#     cursor.execute(f"select * from {post} where shenase={cid}")
+#     dict_product=cursor.fetchall()
+#     return dict_product
 
 def use_post_table(post,cid):
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
@@ -239,6 +269,7 @@ def use_post_table(post,cid):
     cursor.execute(f"select * from {post} where cid={cid}")
     dict_product=cursor.fetchall()
     return dict_product
+
 
 def use_post_table_shenase(post,shenase):
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
@@ -254,26 +285,39 @@ def use_post_on_table(post):
     dict_product=cursor.fetchall()
     return dict_product
 
-def use_post_one_table(post,row,cid):
+def use_post_one_table(post,row,shenase):
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute(f"select {row} from {post} where cid={cid}")
+    cursor.execute(f"select {row} from {post} where shenase={shenase}")
     dict_product=cursor.fetchall()
     return dict_product
 
-def update_post_one_table(post,cid,key,value):
+# def update_post_one_table(post,cid,key,value):
+#     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
+#     cursor = cnx.cursor()
+#     cursor.execute(f"update {post} set {key}='{value}' where cid={cid}")
+#     cursor.close()
+#     cnx.commit()
+
+def update_post_one_table(post,shenase,key,value):
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
-    cursor.execute(f"update {post} set {key}='{value}' where cid={cid}")
+    cursor.execute(f"update {post} set {key}='{value}' where shenase={shenase}")
     cursor.close()
     cnx.commit()
 
-def update_post_last_table(post_name,post,shenase,status,date,cid):
+def update_post_last_table(post_name,post,shenase,status,date,future_date):
     cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
     cursor = cnx.cursor()
-    cursor.execute(f"update {post_name} set post='{post}' ,shenase={shenase}, status='{status}', date='{date}' where cid={cid}")
+    cursor.execute(f"update {post_name} set post='{post}' , status='{status}', date='{date}', future_date={future_date}  where shenase={shenase}")
     cursor.close()
     cnx.commit()
 
+def DELETE_post_table(post,shenase):
+    cnx = mysql.connector.connect(user='root', password='ioWJnL7vsHuiNieCO91d',host='data-gav-service',database="data")
+    cursor = cnx.cursor()
+    cursor.execute(f"DELETE FROM {post} where shenase={shenase}")
+    cursor.close()
+    cnx.commit()
 
 
