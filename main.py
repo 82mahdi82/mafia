@@ -9,10 +9,10 @@ import threading
 
 database.create_database()
 
-TOKEN ='7131290895:AAGu4M4FL3wGI_f_F4oCSpA5clA2KrPxH-0'#'6317356905:AAGQ2p8Lo0Kc4mkChTmE7ZbI2p1bzw9cIO8'#'7131290895:AAGu4M4FL3wGI_f_F4oCSpA5clA2KrPxH-0'
+TOKEN ='7131290895:AAGu4M4FL3wGI_f_F4oCSpA5clA2KrPxH-0'  #'6317356905:AAGQ2p8Lo0Kc4mkChTmE7ZbI2p1bzw9cIO8'
 
 userStep ={}
-admin=6787950647#748626808#6787950647
+admin=6787950647  #748626808
 chanel_id=-1001530508024
 dict_receive_direct_message={}#cid:"off\on"
 dict_receive_chat_request={}#cid:"off\on"
@@ -68,16 +68,16 @@ bot.set_update_listener(listener)
 
 def button_nemu():
     markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("پروفایل👤")
-    markup.add("دوست دختر🙋‍","دوست پسر🙋‍♂")
-    markup.add("شوگر مامی🙎‍","شوگر ددی🙎‍")
-    markup.add("ازدواج موقت👩‍❤️‍👨","ازدواج دائم💍")
-    markup.add("همخونه یابی🏠")
+    markup.add("پروفایل 👤")
+    markup.add("دوست دختر 🙋‍","دوست پسر 🙋‍♂")
+    markup.add("شوگر مامی 🙎‍","شوگر ددی 🙎‍♂")
+    markup.add("ازدواج موقت 👩‍❤️‍👨","ازدواج دائم 💍")
+    markup.add("همخونه یابی 🏠")
     markup.add("🙎‍♂اتصال به ناشناس🙎‍")
-    markup.add("تدریس📖","پارتنر علمی👨‍🎓")
-    markup.add("انجام پروژه","تبلیغات📰")
-    markup.add("پشتیبانی📬","توضیحات")
-    markup.add("دعوت دوستان👥")
+    markup.add("تدریس 📖","پارتنر علمی 👨‍🎓")
+    markup.add("انجام پروژه 📋","تبلیغات 📰")
+    markup.add("پشتیبانی 📬","توضیحات  🗂")
+    markup.add("دعوت دوستان 👥")
     return markup
 
 def main_menu_keyboard_for_profile(cid):
@@ -86,7 +86,7 @@ def main_menu_keyboard_for_profile(cid):
 def button_inlin_edit_profile(cid):
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
-    markup.add(InlineKeyboardButton("عکس(این مورد اجباری نمیباشد)",callback_data=f"edit_photo_{cid}"))
+    markup.add(InlineKeyboardButton("عکس (این مورد اجباری نمیباشد)",callback_data=f"edit_photo_{cid}"))
     markup.add(InlineKeyboardButton("اسم",callback_data=f"edit_name_{cid}"),InlineKeyboardButton("جنسیت",callback_data=f"edit_gender_{cid}"))
     markup.add(InlineKeyboardButton("سن",callback_data=f"edit_age_{cid}"),InlineKeyboardButton("تحصیلات",callback_data=f"edit_education_{cid}"))
     markup.add(InlineKeyboardButton("قد",callback_data=f"edit_height_{cid}"),InlineKeyboardButton("وزن",callback_data=f"edit_weight_{cid}"))
@@ -115,6 +115,235 @@ def text_edit_profile(dict_info_profile):
 """
 
 #-------------------------------------------------------callback---------------------------------------------------------------
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("mypost"))
+def showmypost(call):
+    cid = call.message.chat.id
+    if cid in list_admin_block:
+        bot.send_message(cid,"کاربر گرامی شما مسدود شده اید")
+        return
+    mid = call.message.message_id
+    data = call.data.split("_")
+    dict_profile=database.use_profile_table(cid)[0]
+    list_name_post=["girlfriend",'boyfriend','hhome','sugermommy','sugerdady','tompmarri','marri','partnerlang','partnerkoo','teachlang','teachkoo','teachuniv','teachsys','projectuinv','projectwork']
+    for post_name in list_name_post:
+        list_dict=database.use_post_on_table(post_name)
+        if len(list_dict)>0:
+            for dict_info in list_dict:
+                shenase=dict_info["shenase"]
+                if dict_info["cid"]==cid:
+                    if post_name=="girlfriend":
+                        text=f"""
+موضوع پست: دوست دختر
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره دوست دختری که میخوام: {dict_info["ebout_girl"]}
+
+● رنج سنی دوست دختری که میخوام: {dict_info["age_f"]}
+"""
+                    elif post_name=="boyfriend":
+                        text=f"""
+موضوع پست: دوست پسر
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره دوست پسری که میخوام: {dict_info["ebout_boy"]}
+
+● رنج سنی دوست پسرم: {dict_info["age_f"]}
+"""
+                    elif post_name=="hhome":
+                        text=f"""
+موضوع پست: همخونه
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره همخونه ای که میخوام: {dict_info["ebout_hhome"]}
+
+● ویژگی های خونه ای که دارم یا میخوام: {dict_info["ebout_home"]}
+"""
+                    elif post_name=="sugermommy":
+                        text=f"""
+موضوع پست: شوگرمامی
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پسری که میخوام: {dict_info["ebout_boy"]}
+
+● رنج سنی پسری که میخوام: {dict_info["age_f"]}
+"""
+                    elif post_name=="sugerdady":
+                        text=f"""
+موضوع پست: شوگرددی
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره دختری که میخوام: {dict_info["ebout_girl"]}
+
+● رنج سنی دختری که میخوام: {dict_info["age_f"]}
+"""
+                    elif post_name=="tompmarri":
+                        text=f"""
+موضوع پست: ازدواج موقت
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پسر/دختری که میخوام: {dict_info["ebout_boy_girl"]}
+
+● رنج سنی پسر/دختری که میخوام: {dict_info["age_f"]}
+
+● چقدر مهریه میدم/میگیرم: {dict_info["dowry"]}
+"""
+                    elif post_name=="marri":
+                        text=f"""
+موضوع پست: ازدواج دائم
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پسر/دختری که میخوام: {dict_info["ebout_boy_girl"]}
+
+● رنج سنی پسر/دختری که میخوام: {dict_info["age_f"]}
+"""
+                    elif post_name=="advertising":
+                        text=f"""
+موضوع پست: تبلیغات
+
+● تبلیغات: {dict_info["ebout"]}
+
+"""
+
+                    elif post_name=="partnerlang":
+                        text=f"""
+موضوع پست: پارتنر زبان
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پارتنری که میخوام: {dict_info["ebout_you"]}
+
+● رنج سنی پارتنرم: {dict_info["age_f"]}
+"""
+                    elif post_name=="partnerkoo":
+                        text=f"""
+موضوع پست: پارتنر کنکور
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پارتنری که میخوام: {dict_info["ebout_you"]}
+
+● رنج سنی پارتنرم: {dict_info["age_f"]}
+"""
+                    elif post_name=="teachlang":
+                        text=f"""
+موضوع پست: تدریس زبان
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                    elif post_name=="teachkoo":
+                        text=f"""
+موضوع پست: تدریس دروس کنکور
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                    elif post_name=="teachuniv":
+                        text=f"""
+موضوع پست: تدریس دروس دانشگاهی
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                    elif post_name=="teachsys":
+                        text=f"""
+موضوع پست: تدریس نرم افزار
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                    elif post_name=="projectuinv":
+                        text=f"""
+موضوع پست: انجام پروژه درسی و دانشگاهی
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره تخصص من: {dict_info["ecpertise"]}
+"""
+                    elif post_name=="projectwork":
+                        text=f"""
+موضوع پست: انجام پروژه حرفه ای و صنعتی
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره تخصص من: {dict_info["ecpertise"]}
+"""
+
+
+                    markup=InlineKeyboardMarkup()
+                    if dict_info["cid"]==cid:
+                        markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}_{shenase}"))
+        #             elif cid == admin:
+        #                 markup.add(InlineKeyboardButton("حذف پست",callback_data=f"admin_delete_{post_name}_{dict_info['cid']}_{shenase}"),InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
+        #             else:
+        #                 markup.add(InlineKeyboardButton("🖋 ارسال پیام خصوصی",callback_data=f"posend_{dict_info['cid']}_{post_name}_{shenase}"),InlineKeyboardButton("📃 ثبت پست جدید",callback_data=f"insert_post_{post_name}"))#posend_cidpost_postname
+        #                 markup.add(InlineKeyboardButton("⛔️ گزارش",callback_data=f"report_{post_name}_{shenase}"),InlineKeyboardButton("📄 برگشت به لیست",callback_data=f"show_list_{post_name}"))
+                    bot.send_message(cid,f"""
+{text}
+
+پروفایل پست گذار: /user_{dict_profile["ID"]}
+بروزرسانی : {dict_info["date"]}
+""",reply_markup=markup)            
+    
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("semessage"))
@@ -360,10 +589,10 @@ def nmayesh(call):
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"semessage_{uid}"))
     if int(uid) in people_chatting_anonymous:
-        markup.add(InlineKeyboardButton("درخواست چت ناشناس(کاربر درحال چت است)",callback_data=f"request_chating_{uid}_{ID}"))
+        markup.add(InlineKeyboardButton("درخواست چت ناشناس (کاربر درحال چت است)",callback_data=f"request_chating_{uid}_{ID}"))
     else:
         if int(uid) in dict_cid_chat_anonymous:
-            markup.add(InlineKeyboardButton("درخواست چت ناشناس(کاربر درحال چت است)",callback_data=f"request_chating_{uid}_{ID}"))
+            markup.add(InlineKeyboardButton("درخواست چت ناشناس (کاربر درحال چت است)",callback_data=f"request_chating_{uid}_{ID}"))
         else:
             markup.add(InlineKeyboardButton("درخواست چت ناشناس",callback_data=f"request_chat_{uid}_{ID}"))
  
@@ -380,6 +609,16 @@ def nmayesh(call):
         return
     mid = call.message.message_id
     data = call.data.split("_")
+
+    dict_info_user=database.use_profile_table(cid)[0]
+    list_check=[]
+    for i in dict_info_user:
+        list_check.append(dict_info_user[i])
+    print(list_check)
+    if "وارد نشده" in list_check:
+        main_menu_keyboard_for_profile(cid)
+        return
+
     id=database.use_profile_table(cid)[0]["ID"]
     post_name=data[2]
     uid=int(data[1])
@@ -409,6 +648,14 @@ def nmayesh(call):
     mid = call.message.message_id
     data = call.data.split("_")
     id=database.use_profile_table(cid)[0]["ID"]
+    dict_info_user=database.use_profile_table(cid)[0]
+    list_check=[]
+    for i in dict_info_user:
+        list_check.append(dict_info_user[i])
+    print(list_check)
+    if "وارد نشده" in list_check:
+        main_menu_keyboard_for_profile(cid)
+        return
     post_name=data[2]
     uid=int(data[1])
     if id not in dict_block[uid]:
@@ -471,35 +718,256 @@ def nmayesh(call):
     if data[1]=="list":
         list_post=database.use_post_on_table(data[2])
         if len(list_post)>0:
-            if len(list_post)>5:
-                text=""
-                for i in list_post[:6]:
-                    text+=f"""
-شناسه پست: {i["shenase"]}
-تاریخ انتشار: {i["date"]}
+            
+            for i in list_post:
+                dict_profile=database.use_profile_table(i["cid"])[0]
+                post_name=data[2]
+                dict_info=i
+                if post_name=="girlfriend": 
+                    
+                    text=f"""
+موضوع پست: دوست دختر
 
-مشاهده پست : /viewp_{i["shenase"]}_{data[2]}
-➖➖➖➖➖➖➖➖➖
-"""
-                markup=InlineKeyboardMarkup()
-                markup.add(InlineKeyboardButton("صفحه بعد",callback_data=f"page_next_{data[2]}_1"))
-                markup.add(InlineKeyboardButton("برگشت",callback_data=f"back_m{data[2]}"))
-                bot.edit_message_text(text,cid,mid,reply_markup=markup)
-            else:
-                text=""
-                for i in list_post:
-                    text+=f"""
-شناسه پست: {i["shenase"]}
-تاریخ انتشار: {i["date"]}
+ ● درباره من: {dict_info["ebout"]}
 
-مشاهده پست : /viewp_{i["shenase"]}_{data[2]}
-➖➖➖➖➖➖➖➖➖
+ ● سن من: {dict_profile["age"]}
+
+ ● درباره دوست دختری که میخوام: {dict_info["ebout_girl"]}
+
+ ● رنج سنی دوست دختری که میخوام: {dict_info["age_f"]}
 """
+                elif post_name=="boyfriend":
+                    text=f"""
+موضوع پست: دوست پسر
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره دوست پسری که میخوام: {dict_info["ebout_boy"]}
+
+● رنج سنی دوست پسرم: {dict_info["age_f"]}
+"""
+                elif post_name=="hhome":
+                    text=f"""
+موضوع پست: همخونه
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره همخونه ای که میخوام: {dict_info["ebout_hhome"]}
+
+● ویژگی های خونه ای که دارم یا میخوام: {dict_info["ebout_home"]}
+"""
+                elif post_name=="sugermommy":
+                    text=f"""
+موضوع پست: شوگرمامی
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پسری که میخوام: {dict_info["ebout_boy"]}
+
+● رنج سنی پسری که میخوام: {dict_info["age_f"]}
+"""
+                elif post_name=="sugerdady":
+                    text=f"""
+موضوع پست: شوگرددی
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره دختری که میخوام: {dict_info["ebout_girl"]}
+
+● رنج سنی دختری که میخوام: {dict_info["age_f"]}
+"""
+                elif post_name=="tompmarri":
+                    text=f"""
+موضوع پست: ازدواج موقت
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پسر/دختری که میخوام: {dict_info["ebout_boy_girl"]}
+
+● رنج سنی پسر/دختری که میخوام: {dict_info["age_f"]}
+
+ ● چقدر مهریه میدم/میگیرم: {dict_info["dowry"]}
+"""
+                elif post_name=="marri":
+                    text=f"""
+موضوع پست: ازدواج دائم
+
+ ● درباره من: {dict_info["ebout"]}
+
+ ● سن من: {dict_profile["age"]}
+
+ ● درباره پسر/دختری که میخوام: {dict_info["ebout_boy_girl"]}
+
+ ● رنج سنی پسر/دختری که میخوام: {dict_info["age_f"]}
+"""
+                elif post_name=="advertising":
+                    text=f"""
+موضوع پست: تبلیغات
+
+● تبلیغات: {dict_info["ebout"]}
+
+"""
+
+                elif post_name=="partnerlang":
+                    text=f"""
+موضوع پست: پارتنر زبان
+
+ ● درباره هدف من: {dict_info["ebout"]}
+
+ ● سن من: {dict_profile["age"]}
+
+ ● درباره پارتنری که میخوام: {dict_info["ebout_you"]}
+
+ ● رنج سنی پارتنرم: {dict_info["age_f"]}
+"""
+                elif post_name=="partnerkoo":
+                    text=f"""
+موضوع پست: پارتنر کنکور
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره پارتنری که میخوام: {dict_info["ebout_you"]}
+
+● رنج سنی پارتنرم: {dict_info["age_f"]}
+"""
+                elif post_name=="teachlang":
+                    text=f"""
+موضوع پست: تدریس زبان
+
+● درباره من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                elif post_name=="teachkoo":
+                    text=f"""
+موضوع پست: تدریس دروس کنکور
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                elif post_name=="teachuniv":
+                    text=f"""
+موضوع پست: تدریس دروس دانشگاهی
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                elif post_name=="teachsys":
+                    text=f"""
+موضوع پست: تدریس نرم افزار
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● چیزی که تدریس میکنم: {dict_info["whatteach"]}
+
+● سابقه تدریس من: {dict_info["teach_exp"]}
+
+● هزینه تدریس من: {dict_info["cost"]}
+"""
+                elif post_name=="projectuinv":
+                    text=f"""
+موضوع پست: انجام پروژه درسی و دانشگاهی
+
+ ● درباره هدف من: {dict_info["ebout"]}
+
+ ● سن من: {dict_profile["age"]}
+
+ ● درباره تخصص من: {dict_info["ecpertise"]}
+"""
+                elif post_name=="projectwork":
+                    text=f"""
+موضوع پست: انجام پروژه حرفه ای و صنعتی
+
+● درباره هدف من: {dict_info["ebout"]}
+
+● سن من: {dict_profile["age"]}
+
+● درباره تخصص من: {dict_info["ecpertise"]}
+"""
+
+                shenase=i["shenase"]
                 markup=InlineKeyboardMarkup()
-                markup.add(InlineKeyboardButton("برگشت",callback_data=f"back_m{data[2]}"))
-                bot.edit_message_text(text,cid,mid,reply_markup=markup)
+                if dict_info["cid"]==cid:
+                    markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}_{shenase}"),InlineKeyboardButton("📄 برگشت به لیست",callback_data=f"show_list_{post_name}"))
+                elif cid == admin:
+                    markup.add(InlineKeyboardButton("حذف پست",callback_data=f"admin_delete_{post_name}_{dict_info['cid']}_{shenase}"),InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
+                else:
+                    markup.add(InlineKeyboardButton("🖋 ارسال پیام خصوصی",callback_data=f"posend_{dict_info['cid']}_{post_name}_{shenase}"),InlineKeyboardButton("📃 ثبت پست جدید",callback_data=f"insert_post_{post_name}"))#posend_cidpost_postname
+                    markup.add(InlineKeyboardButton("⛔️ گزارش",callback_data=f"report_{post_name}_{shenase}"),InlineKeyboardButton("📄 برگشت به لیست",callback_data=f"show_list_{post_name}"))
+                bot.send_message(cid,f"""
+
+{text}
+
+تاریخ ثبت پست : {dict_info["date"]}
+
+@MeetMateAI_CHannel
+@MeetMateAIBot
+""",reply_markup=markup)
+
+
+#             if len(list_post)>5:
+#                 text=""
+#                 for i in list_post[:6]:
+#                     text+=f"""
+# شناسه پست: {i["shenase"]}
+# تاریخ انتشار: {i["date"]}
+
+# مشاهده پست : /viewp_{i["shenase"]}_{data[2]}
+# ➖➖➖➖➖➖➖➖➖
+# """
+#                 markup=InlineKeyboardMarkup()
+#                 markup.add(InlineKeyboardButton("صفحه بعد",callback_data=f"page_next_{data[2]}_1"))
+#                 markup.add(InlineKeyboardButton("برگشت",callback_data=f"back_m{data[2]}"))
+#                 bot.edit_message_text(text,cid,mid,reply_markup=markup)
+#             else:
+#                 text=""
+#                 for i in list_post:
+#                     text+=f"""
+# شناسه پست: {i["shenase"]}
+# تاریخ انتشار: {i["date"]}
+
+# مشاهده پست : /viewp_{i["shenase"]}_{data[2]}
+# ➖➖➖➖➖➖➖➖➖
+# """
+#                 markup=InlineKeyboardMarkup()
+#                 markup.add(InlineKeyboardButton("برگشت",callback_data=f"back_m{data[2]}"))
+#                 bot.edit_message_text(text,cid,mid,reply_markup=markup)
         else:
-            bot.answer_callback_query(call.id,"🔴 هنوز پستی ثبت نشده 🔴")
+            bot.answer_callback_query(call.id,"🔴✅🔴    هنوز پستی ثبت نشده است    🔴✅🔴")
 
 
 
@@ -537,7 +1005,8 @@ def nmayesh(call):
             dict_receive_chat_request[cid]="off"
 
     markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("بلاک شده ها",callback_data="blist"),InlineKeyboardButton("موجودی",callback_data="inventory"))
+    markup.add(InlineKeyboardButton("بلاک شده ها ❌",callback_data="blist"),InlineKeyboardButton("موجودی 💵",callback_data="inventory"))
+    markup.add(InlineKeyboardButton("پست های ثبت شده من 📑",callback_data="mypost"))
     if dict_receive_direct_message[cid]=="off":
         markup.add(InlineKeyboardButton("دریافت پیام دایرکت: 🔴 غیر فعال",callback_data=f"receive_direct_message_{cid}"))
     else:
@@ -547,6 +1016,7 @@ def nmayesh(call):
     else:
         markup.add(InlineKeyboardButton("دریافت درخواست چت: 🟢 فعال",callback_data=f"receive_chat_request_{cid}"))
     markup.add(InlineKeyboardButton("تکمیل و ویرایش پروفایل",callback_data=f"edit_profile_{cid}"))
+    markup.add(InlineKeyboardButton("برگشت",callback_data="back_mprofile"))
     bot.edit_message_reply_markup(cid,mid,reply_markup=markup)
         
 @bot.callback_query_handler(func=lambda call: call.data.startswith("back"))
@@ -567,7 +1037,8 @@ def nmayesh(call):
         dict_info_profile=list_dict_profile_new[0]
         print(dict_info_profile)
         markup=InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("بلاک شده ها",callback_data="blist"),InlineKeyboardButton("موجودی",callback_data="inventory"))
+        markup.add(InlineKeyboardButton("بلاک شده ها ❌",callback_data="blist"),InlineKeyboardButton("موجودی 💵",callback_data="inventory"))
+        markup.add(InlineKeyboardButton("پست های ثبت شده من 📑",callback_data="mypost"))
         if dict_receive_direct_message[cid]=="off":
             markup.add(InlineKeyboardButton("دریافت پیام دایرکت: 🔴 غیر فعال",callback_data=f"receive_direct_message_{cid}"))
         else:
@@ -577,6 +1048,7 @@ def nmayesh(call):
         else:
             markup.add(InlineKeyboardButton("دریافت درخواست چت: 🟢 فعال",callback_data=f"receive_chat_request_{cid}"))
         markup.add(InlineKeyboardButton("تکمیل و ویرایش پروفایل",callback_data=f"edit_profile_{cid}"))
+        markup.add(InlineKeyboardButton("برگشت",callback_data="back_mprofile"))
         bot.send_photo(cid,dict_info_profile["photo"],text_edit_profile(dict_info_profile),reply_markup=markup)
         
     elif data[1]=="mprofile":
@@ -676,8 +1148,8 @@ def nmayesh(call):
         markup=InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
         markup.add(InlineKeyboardButton("درباره من",callback_data=f"selectpost_hhome_ebout_{shenase}"))
-        markup.add(InlineKeyboardButton("درباره دوست پسری که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{shenase}"))
-        markup.add(InlineKeyboardButton("رنج سنی دوست پسرم",callback_data=f"selectpost_hhome_ebouthome_{shenase}"))
+        markup.add(InlineKeyboardButton("درباره همخونه ای که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{shenase}"))
+        markup.add(InlineKeyboardButton("ویژگی های خونه ای که دارم یا میخوام",callback_data=f"selectpost_hhome_ebouthome_{shenase}"))
 #         if database.use_post_one_table("hhome","post",cid)[0]["post"]=="yes":
 #             markup.add(InlineKeyboardButton("برگشت",callback_data="back_mhhome"))
 #             bot.edit_message_text(f"""
@@ -1184,8 +1656,8 @@ def nmayesh(call):
         markup=InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
         markup.add(InlineKeyboardButton("درباره من",callback_data=f"selectpost_hhome_ebout_{data[-1]}"))
-        markup.add(InlineKeyboardButton("درباره دوست دختری که میخوام",callback_data=f"selectpost_hhome_eboutgirl_{data[-1]}"))
-        markup.add(InlineKeyboardButton("رنج سنی دوست دخترم",callback_data=f"selectpost_hhome_age_{data[-1]}"))
+        markup.add(InlineKeyboardButton("درباره همخونه ای که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{data[-1]}"))
+        markup.add(InlineKeyboardButton("ویژگی های خونه ای که دارم یا میخوام",callback_data=f"selectpost_hhome_ebouthome_{data[-1]}"))
         markup.add(InlineKeyboardButton("حذف پست",callback_data=f"delete_hhome_{data[-1]}"))
         markup.add(InlineKeyboardButton("برگشت",callback_data="back_mhhome"))
         bot.edit_message_text(f"""
@@ -1400,6 +1872,7 @@ def nmayesh(call):
         return
     mid = call.message.message_id
     data = call.data.split("_")
+    print("data::::",data)
     if data[1]=="post":
         if data[2]=="girlfriend":
             dict_info_user=database.use_profile_table(cid)[0]
@@ -1497,8 +1970,8 @@ def nmayesh(call):
                 markup=InlineKeyboardMarkup()
                 markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
                 markup.add(InlineKeyboardButton("درباره من",callback_data=f"selectpost_hhome_ebout_{number}"))
-                markup.add(InlineKeyboardButton("درباره دوست پسری که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{number}"))
-                markup.add(InlineKeyboardButton("رنج سنی دوست پسرم",callback_data=f"selectpost_hhome_ebouthome_{number}"))
+                markup.add(InlineKeyboardButton("درباره همخونه ای که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{number}"))
+                markup.add(InlineKeyboardButton("ویژگی های خونه ای که دارم یا میخوام",callback_data=f"selectpost_hhome_ebouthome_{number}"))
                 markup.add(InlineKeyboardButton("ثبت پست",callback_data=f"record_post_hhome_{number}"))
                 markup.add(InlineKeyboardButton("برگشت",callback_data="back_mhhome"))
                 bot.edit_message_text(f"""
@@ -1538,7 +2011,7 @@ def nmayesh(call):
                 markup.add(InlineKeyboardButton("رنج سنی پسری که میخوام",callback_data=f"selectpost_sugermommy_age_{number}"))
                 markup.add(InlineKeyboardButton("ثبت پست",callback_data=f"record_post_sugermommy_{number}"))
                 markup.add(InlineKeyboardButton("برگشت",callback_data="back_msugermommy"))
-                bot.edit_message_text(cid,f"""
+                bot.edit_message_text(f"""
 {dict_info_user["name"]} عزیز
 برای استفاده از این بخش و ارسال پست ابتدا باید موارد زیر را تکمیل کنید
 
@@ -2222,6 +2695,7 @@ def nmayesh(call):
     if cid in list_admin_block:
         bot.send_message(cid,"کاربر گرامی شما مسدود شده اید")
         return
+    bot.answer_callback_query(call.id,"          ویرایش پروفایل انجام شد ✅")
     mid = call.message.message_id
     data = call.data.split("_")
     if data[1]=="gender":
@@ -2325,7 +2799,7 @@ def call_callback_panel_amar(call):
             bot.edit_message_text("برای فوروارد همگانی پیام لطفا پیام خود را ارسال کنید و در غیر این صورت برای بازگشت به پنل از دکمه زیر استفاده کنید",cid,mid,reply_markup=markup)
             userStep[cid]=1001
     else:
-        bot.answer_callback_query(call.id,"هنوز کاربری وجود ندارد")
+        bot.answer_callback_query(call.id,"🔴✅🔴    هنوز پستی ثبت نشده است    🔴✅🔴")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("admin"))
@@ -2539,16 +3013,16 @@ def command_start(m):
             markup=ReplyKeyboardMarkup(resize_keyboard=True)
             if cid in dict_cid_chat_anonymous:
                 markup.add("لغو جستجو")
-            markup.add("پروفایل👤")
-            markup.add("دوست دختر🙋‍","دوست پسر🙋‍♂")
-            markup.add("شوگر مامی🙎‍","شوگر ددی🙎‍")
-            markup.add("ازدواج موقت👩‍❤️‍👨","ازدواج دائم💍")
-            markup.add("همخونه یابی🏠")
+            markup.add("پروفایل 👤")
+            markup.add("دوست دختر 🙋‍","دوست پسر 🙋‍♂")
+            markup.add("شوگر مامی 🙎‍","شوگر ددی 🙎‍♂")
+            markup.add("ازدواج موقت 👩‍❤️‍👨","ازدواج دائم 💍")
+            markup.add("همخونه یابی 🏠")
             markup.add("🙎‍♂اتصال به ناشناس🙎‍")
-            markup.add("تدریس📖","پارتنر علمی👨‍🎓")
-            markup.add("انجام پروژه","تبلیغات📰")
-            markup.add("پشتیبانی📬","توضیحات")
-            markup.add("دعوت دوستان👥")
+            markup.add("تدریس 📖","پارتنر علمی 👨‍🎓")
+            markup.add("انجام پروژه 📋","تبلیغات 📰")
+            markup.add("پشتیبانی 📬","توضیحات  🗂")
+            markup.add("دعوت دوستان 👥")
             bot.send_message(cid,f"""
 سلام {m.chat.first_name} عزیز 
 به ربات دوست یابی خوش آمدید برای استفاده از ربات از دکمه های زیر استفاده کنید
@@ -2821,7 +3295,7 @@ def handel_text(m):
 """
             elif post_name=="projectuinv":
                 text=f"""
-موضوع پست: انجام پروژه درسی
+موضوع پست: انجام پروژه درسی و دانشگاهی
 
 ● درباره هدف من: {dict_info["ebout"]}
 
@@ -2831,7 +3305,7 @@ def handel_text(m):
 """
             elif post_name=="projectwork":
                 text=f"""
-موضوع پست: انجام پروژه حرفه ای
+موضوع پست: انجام پروژه حرفه ای و صنعتی
 
 ● درباره هدف من: {dict_info["ebout"]}
 
@@ -2843,12 +3317,12 @@ def handel_text(m):
 
             markup=InlineKeyboardMarkup()
             if dict_info["cid"]==cid:
-                markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}_{shenase}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))
+                markup.add(InlineKeyboardButton("ویرایش پست",callback_data=f"shpost_{post_name}_{shenase}"),InlineKeyboardButton("📄 برگشت به لیست",callback_data=f"show_list_{post_name}"))
             elif cid == admin:
                 markup.add(InlineKeyboardButton("حذف پست",callback_data=f"admin_delete_{post_name}_{dict_info['cid']}_{shenase}"),InlineKeyboardButton("بازگشت به پنل",callback_data="admin_back_panel"))
             else:
-                markup.add(InlineKeyboardButton("ارسال پیام",callback_data=f"posend_{dict_info['cid']}_{post_name}_{shenase}"),InlineKeyboardButton("برگشت به لیست",callback_data=f"show_list_{post_name}"))#posend_cidpost_postname
-                markup.add(InlineKeyboardButton("گزارش",callback_data=f"report_{post_name}_{shenase}"))
+                markup.add(InlineKeyboardButton("🖋 ارسال پیام خصوصی",callback_data=f"posend_{dict_info['cid']}_{post_name}_{shenase}"),InlineKeyboardButton("📃 ثبت پست جدید",callback_data=f"insert_post_{post_name}"))#posend_cidpost_postname
+                markup.add(InlineKeyboardButton("⛔️ گزارش",callback_data=f"report_{post_name}_{shenase}"),InlineKeyboardButton("📄 برگشت به لیست",callback_data=f"show_list_{post_name}"))
             bot.send_message(cid,f"""
 {text}
                          
@@ -2871,7 +3345,7 @@ def handel_text(m):
     userStep[cid]=0
     text=m.text
     bot.send_message(cid,text,reply_markup=button_nemu())
-@bot.message_handler(func=lambda m: m.text=="پروفایل👤")
+@bot.message_handler(func=lambda m: m.text=="پروفایل 👤")
 def def_show_profile(m):
     cid=m.chat.id
     if cid in list_admin_block:
@@ -2884,7 +3358,8 @@ def def_show_profile(m):
     dict_info_profile=list_dict_profile_new[0]
     print(dict_info_profile)
     markup=InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("بلاک شده ها",callback_data="blist"),InlineKeyboardButton("موجودی",callback_data="inventory"))
+    markup.add(InlineKeyboardButton("بلاک شده ها ❌",callback_data="blist"),InlineKeyboardButton("موجودی 💵",callback_data="inventory"))
+    markup.add(InlineKeyboardButton("پست های ثبت شده من 📑",callback_data="mypost"))
     if dict_receive_direct_message[cid]=="off":
         markup.add(InlineKeyboardButton("دریافت پیام دایرکت: 🔴 غیر فعال",callback_data=f"receive_direct_message_{cid}"))
     else:
@@ -2894,14 +3369,15 @@ def def_show_profile(m):
     else:
         markup.add(InlineKeyboardButton("دریافت درخواست چت: 🟢 فعال",callback_data=f"receive_chat_request_{cid}"))
     markup.add(InlineKeyboardButton("تکمیل و ویرایش پروفایل",callback_data=f"edit_profile_{cid}"))
+    markup.add(InlineKeyboardButton("برگشت",callback_data="back_mprofile"))
     bot.send_photo(cid,dict_info_profile["photo"],text_edit_profile(dict_info_profile),reply_markup=markup)
 
 
 
 @bot.message_handler(func=lambda m: m.text=="زبان" or m.text=="کنکور" or m.text=="دروس کنکور" or m.text=="دروس دانشگاهی"
-                       or m.text=="زبان🖋" or m.text=="نرم افزار💻" or m.text=="حرفه ای و صنعتی" or m.text=="حرفه ای" or m.text=="دوست دختر🙋‍"
-                       or m.text=="دوست پسر🙋‍♂" or m.text=="همخونه یابی🏠" or m.text=="شوگر مامی🙎‍" or m.text=="شوگر ددی🙎‍"
-                       or m.text=="ازدواج موقت👩‍❤️‍👨" or m.text=="ازدواج دائم💍" or m.text=="تبلیغات📰")
+                       or m.text=="زبان🖋" or m.text=="نرم افزار💻" or m.text=="حرفه ای و صنعتی" or m.text=="حرفه ای" or m.text=="دوست دختر 🙋‍"
+                       or m.text=="دوست پسر 🙋‍♂" or m.text=="همخونه یابی 🏠" or m.text=="شوگر مامی 🙎‍" or m.text=="شوگر ددی 🙎‍♂"
+                       or m.text=="ازدواج موقت 👩‍❤️‍👨" or m.text=="ازدواج دائم 💍" or m.text=="تبلیغات 📰")
 def handel_text(m):
     cid=m.chat.id
     if cid in list_admin_block:
@@ -2910,21 +3386,21 @@ def handel_text(m):
     text=m.text
     mid=m.message_id
     userStep[cid]=0
-    if m.text=="دوست دختر🙋‍":
+    if m.text=="دوست دختر 🙋‍":
         post_name="girlfriend"
-    elif m.text=="دوست پسر🙋‍♂":
+    elif m.text=="دوست پسر 🙋‍♂":
         post_name="boyfriend"
-    elif m.text=="دوست پسر🙋‍♂":
+    elif m.text=="دوست پسر 🙋‍♂":
         post_name="boyfriend"
-    elif m.text=="همخونه یابی🏠":
+    elif m.text=="همخونه یابی 🏠":
         post_name="hhome"
-    elif m.text=="شوگر مامی🙎‍":
+    elif m.text=="شوگر مامی 🙎‍":
         post_name="sugermommy"
-    elif m.text=="شوگر ددی🙎‍":
+    elif m.text=="شوگر ددی 🙎‍♂":
         post_name="sugerdady"
-    elif m.text=="ازدواج موقت👩‍❤️‍👨":
+    elif m.text=="ازدواج موقت 👩‍❤️‍👨":
         post_name="tompmarri"
-    elif m.text=="ازدواج دائم💍":
+    elif m.text=="ازدواج دائم 💍":
         post_name="marri"
 
     elif m.text=="زبان" :
@@ -2941,11 +3417,11 @@ def handel_text(m):
     elif m.text=="دروس دانشگاهی":
         post_name="teachuniv" 
 
-    elif m.text=="حرفه ای و صنعتی":
+    elif m.text=="درسی و دانشگاهی":
         post_name="projectuinv" 
-    elif m.text=="حرفه ای":
+    elif m.text=="حرفه ای و صنعتی":
         post_name="projectwork" 
-    elif m.text=="تبلیغات📰":
+    elif m.text=="تبلیغات 📰":
         post_name="advertising"
     check=database.use_post_table(post_name,cid)
     markup=InlineKeyboardMarkup()
@@ -2987,6 +3463,7 @@ def handel_text(m):
         bot.send_message(cid,"کاربر گرامی شما مسدود شده اید")
         return
     text=m.text
+    userStep[cid]=0
     mid=m.message_id
     dict_info_user=database.use_profile_table(cid)[0]
     list_check=[]
@@ -3053,6 +3530,7 @@ def handel_text(m):
         return
     text=m.text
     mid=m.message_id
+    userStep[cid]=0
     dict_info_user=database.use_profile_table(cid)[0]
     list_check=[]
     for i in dict_info_user:
@@ -3112,6 +3590,7 @@ def handel_text(m):
         return
     text=m.text
     mid=m.message_id
+    userStep[cid]=0
     dict_info_user=database.use_profile_table(cid)[0]
     list_check=[]
     for i in dict_info_user:
@@ -3219,7 +3698,7 @@ def handel_text(m):
 
 
 
-@bot.message_handler(func=lambda m: m.text=="تدریس📖")
+@bot.message_handler(func=lambda m: m.text=="تدریس 📖")
 
 def handel_text(m):
     cid=m.chat.id
@@ -3235,7 +3714,7 @@ def handel_text(m):
     markup.add("منو اصلی📜")
     bot.send_message(cid,text,reply_markup=markup)
 
-@bot.message_handler(func=lambda m: m.text=="پارتنر علمی👨‍🎓")
+@bot.message_handler(func=lambda m: m.text=="پارتنر علمی 👨‍🎓")
 def handel_text(m):
     cid=m.chat.id
     if cid in list_admin_block:
@@ -3249,7 +3728,7 @@ def handel_text(m):
     markup.add("منو اصلی📜")
     bot.send_message(cid,text,reply_markup=markup)
 
-@bot.message_handler(func=lambda m: m.text=="انجام پروژه")
+@bot.message_handler(func=lambda m: m.text=="انجام پروژه 📋")
 def handel_text(m):
     cid=m.chat.id
     if cid in list_admin_block:
@@ -3259,32 +3738,33 @@ def handel_text(m):
     mid=m.message_id
     userStep[cid]=0
     markup=ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("حرفه ای و صنعتی","حرفه ای")
+    markup.add("حرفه ای و صنعتی","درسی و دانشگاهی")
     markup.add("منو اصلی📜")
     bot.send_message(cid,text,reply_markup=markup)
 
-@bot.message_handler(func=lambda m: m.text=="دعوت دوستان👥")
+@bot.message_handler(func=lambda m: m.text=="دعوت دوستان 👥")
 def handel_text(m):
     cid=m.chat.id
     if cid in list_admin_block:
         bot.send_message(cid,"کاربر گرامی شما مسدود شده اید")
         return
+    userStep[cid]=0
     text=m.text
     mid=m.message_id
     ID=database.use_profile_table(cid)[0]["ID"]
     bot.send_message(cid,f"""
 کاربر گرامی 
-در صورتی که کاربری با لینک دعوتی شما وارد ربات شود مبلغ هزار تومن به کیف پول شما واریز میشود 
+در صورتی که کاربری با لینک دعوتی شما وارد ربات شود مبلغ هزار تومان به کیف پول شما واریز می شود. 
 لینک دعوت: t.me/{bot.get_me().username}?start={ID}
 """)
 
 
-@bot.message_handler(func=lambda m: m.text=="پشتیبانی📬")
+@bot.message_handler(func=lambda m: m.text=="پشتیبانی 📬")
 def handel_text(m):
     cid=m.chat.id
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("لغو و بازگشت",callback_data="back_mprofile"))
-    bot.send_message(cid,"کاربر گرامی لطفا پیام خود را برای ارسال به ادمین ارسال کنید:",reply_markup=markup)
+    bot.send_message(cid,"کاربر گرامی لطفا پیام خود را برای ارسال به ادمین ارسال کنید: \nبرای ارسال پیام خود میتوانید از : متن , ویس و عکس میتوانید ارسال کنید (حداکثر 300 کاراکتر)",reply_markup=markup)
     userStep[cid]=4000
 
 #-------------------------------------------------------------------userstep-------------------------------------------------------------
@@ -3623,8 +4103,8 @@ def name_custom(m):
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
     markup.add(InlineKeyboardButton("درباره من",callback_data=f"selectpost_hhome_ebout_{dict_filling_up[cid]}"))
-    markup.add(InlineKeyboardButton("درباره دوست پسری که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{dict_filling_up[cid]}"))
-    markup.add(InlineKeyboardButton("رنج سنی دوست پسرم",callback_data=f"selectpost_hhome_ebouthome_{dict_filling_up[cid]}"))
+    markup.add(InlineKeyboardButton("درباره همخونه ای که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{dict_filling_up[cid]}"))
+    markup.add(InlineKeyboardButton("ویژگی های خونه ای که دارم یا میخوام",callback_data=f"selectpost_hhome_ebouthome_{dict_filling_up[cid]}"))
     if database.use_post_one_table("hhome","post",dict_filling_up[cid])[0]["post"]=="yes":
         markup.add(InlineKeyboardButton("برگشت",callback_data="back_mhhome"))
         bot.send_message(cid,f"""
@@ -3673,8 +4153,8 @@ def name_custom(m):
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
     markup.add(InlineKeyboardButton("درباره من",callback_data=f"selectpost_hhome_ebout_{dict_filling_up[cid]}"))
-    markup.add(InlineKeyboardButton("درباره دوست پسری که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{dict_filling_up[cid]}"))
-    markup.add(InlineKeyboardButton("رنج سنی دوست پسرم",callback_data=f"selectpost_hhome_ebouthome_{dict_filling_up[cid]}"))
+    markup.add(InlineKeyboardButton("درباره همخونه ای که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{dict_filling_up[cid]}"))
+    markup.add(InlineKeyboardButton("ویژگی های خونه ای که دارم یا میخوام",callback_data=f"selectpost_hhome_ebouthome_{dict_filling_up[cid]}"))
     if database.use_post_one_table("hhome","post",dict_filling_up[cid])[0]["post"]=="yes":
         markup.add(InlineKeyboardButton("برگشت",callback_data="back_mhhome"))
         bot.send_message(cid,f"""
@@ -3719,8 +4199,8 @@ def name_custom(m):
     markup=InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("برای تکمیل یا ویرایش بر روی دکمه مورد نظر کلیک کنید",callback_data="none"))
     markup.add(InlineKeyboardButton("درباره من",callback_data=f"selectpost_hhome_ebout_{dict_filling_up[cid]}"))
-    markup.add(InlineKeyboardButton("درباره دوست پسری که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{dict_filling_up[cid]}"))
-    markup.add(InlineKeyboardButton("رنج سنی دوست پسرم",callback_data=f"selectpost_hhome_ebouthome_{dict_filling_up[cid]}"))
+    markup.add(InlineKeyboardButton("درباره همخونه ای که میخوام",callback_data=f"selectpost_hhome_ebouthhome_{dict_filling_up[cid]}"))
+    markup.add(InlineKeyboardButton("ویژگی های خونه ای که دارم یا میخوام",callback_data=f"selectpost_hhome_ebouthome_{dict_filling_up[cid]}"))
     if database.use_post_one_table("hhome","post",dict_filling_up[cid])[0]["post"]=="yes":
         markup.add(InlineKeyboardButton("برگشت",callback_data="back_mhhome"))
         bot.send_message(cid,f"""
@@ -4825,6 +5305,9 @@ def name_custom(m):
     cid = m.chat.id
     text=m.text
     mid=m.message_id
+    if len(text)>300:
+        bot.send_message(cid,"تعداد کاراکتر بیشتر از حد مجاز است (تعداد کاراکتر مجاز 300)")
+        return
     ID=database.use_profile_table(cid)[0]["ID"]
     bot.send_message(admin,f"""
 پشتیبانی
@@ -4868,6 +5351,20 @@ def handle_messages(m):
 
     elif get_user_step(cid)==100:   
         bot.copy_message(people_chatting_anonymous[cid],cid,mid) 
+    elif get_user_step(cid)==4000:
+        ID=database.use_profile_table(cid)[0]["ID"]
+        bot.send_message(admin,f"""
+پشتیبانی
+ارسال از کاربر: /user_{ID} 
+➖➖➖➖➖➖➖➖➖
+👇
+""")
+        bot.copy_message(admin,cid,mid)
+        bot.send_message(cid,"پیام شما برای ادمین ارسل شد")
+        userStep[cid]=0
+
+
+
     else:
         bot.send_message(cid, "مقدار وارد شده نامعتبر است \nدر صورت نیاز به راهنمایی /start را بزنید ")
 
@@ -4892,14 +5389,16 @@ def check_and_notify_thread():
             format_time=today.strftime("%Y-%m-%d")
             list_name_post=["girlfriend",'boyfriend','hhome','sugermommy','sugerdady','tompmarri','marri','partnerlang','partnerkoo','teachlang','teachkoo','teachuniv','teachsys','projectuinv','projectwork']
             for post_name in list_name_post:
-                dict_info=database.use_post_on_table(post_name)[0]
-                if dict_info["future_date"]==format_time:
-                    try:
-                        database.DELETE_post_table(post_name,dict_info["shenase"])
-                        bot.send_message(dict_info["cid"],"کاربر گرامی پست شما به مدت 30 روز بر روی ربات قرار داشت و با توجه به اتمام زمان پست شما حذف شد")
+                listdict_info=database.use_post_on_table(post_name)
+                if len(listdict_info)>0:
+                    for dict_info in listdict_info:
+                        if dict_info["future_date"]==format_time:
+                            try:
+                                database.DELETE_post_table(post_name,dict_info["shenase"])
+                                bot.send_message(dict_info["cid"],"کاربر گرامی پست شما به مدت 30 روز بر روی ربات قرار داشت و با توجه به اتمام زمان پست شما حذف شد")
 
-                    except:
-                        pass
+                            except:
+                                pass
         threading.Event().wait(3500)
 
 
