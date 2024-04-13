@@ -126,6 +126,7 @@ def showmypost(call):
     mid = call.message.message_id
     data = call.data.split("_")
     dict_profile=database.use_profile_table(cid)[0]
+    hast=True
     list_name_post=["girlfriend",'boyfriend','hhome','sugermommy','sugerdady','tompmarri','marri','partnerlang','partnerkoo','teachlang','teachkoo','teachuniv','teachsys','projectuinv','projectwork']
     for post_name in list_name_post:
         list_dict=database.use_post_on_table(post_name)
@@ -133,6 +134,7 @@ def showmypost(call):
             for dict_info in list_dict:
                 shenase=dict_info["shenase"]
                 if dict_info["cid"]==cid:
+                    hast=False
                     if post_name=="girlfriend":
                         text=f"""
 موضوع پست: دوست دختر
@@ -342,7 +344,9 @@ def showmypost(call):
 
 پروفایل پست گذار: /user_{dict_profile["ID"]}
 بروزرسانی : {dict_info["date"]}
-""",reply_markup=markup)            
+""",reply_markup=markup) 
+    if hast:
+        bot.answer_callback_query(call.id,"شما هنوز پستی ثبت نکرده اید")           
     
 
 
